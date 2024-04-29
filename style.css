@@ -19,3 +19,8 @@ body {
 	display: flex;
 	gap: 1rem;
 }
+
+.btn:active {
+	background-color: rgb(24, 232, 24);
+	color: lightgray;
+}

@@ -5,17 +5,24 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Document</title>
+		<title>Stopwatch project</title>
+		<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body>
 		<h1>Stopwatch exercise</h1>
 		<p class="time-points"></p>
-		<p class="time-log"></p>
+		<div class="time-log-container">
+			<span class="time-log" id="day-log"></span>:
+			<span class="time-log" id="hour-log"></span>:
+			<span class="time-log" id="minute-log"></span>:
+			<span class="time-log" id="second-log"> </span>:
+			<span class="time-log" id="millisec-log"> </span>
+		</div>
 		<div class="control-btns-container">
 			<button id="start-btn" class="btn">Start</button>
 			<button id="stop-btn" class="btn">Stop</button>
-			<button id="reset-btn" class="-btn">Reset</button>
+			<button id="reset-btn" class="btn">Reset</button>
 		</div>
 		<script src="script.js"></script>
 	</body>

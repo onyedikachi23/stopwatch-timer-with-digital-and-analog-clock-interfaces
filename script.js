@@ -1,11 +1,12 @@
 /** @format */
 
 const timePointsEl = document.querySelector(".time-points");
-const timeLogEl = document.querySelector(".time-log");
 const controlBtnContainerEl = document.querySelector(".control-btns-container");
 const startBtn = controlBtnContainerEl.querySelector("#start-btn");
 const stopBtn = controlBtnContainerEl.querySelector("#stop-btn");
 const resetBtn = controlBtnContainerEl.querySelector("#reset-btn");
+const timeLogsContainerEl = document.querySelector(".time-log-container");
+const timeLogEls = timeLogsContainerEl.getElementsByClassName("time-log");
 
 // add click event listener to the control bitterness
 for (const child of controlBtnContainerEl.children) {
@@ -15,24 +16,16 @@ for (const child of controlBtnContainerEl.children) {
 // createStopWatch template class
 class createStopWatch {
 	// set private properties
-	#startTime = 0;
-	#endTime = 0;
-	#timeDuration = 0;
+	startTime = 0;
+	endTime = 0;
+	timeDuration = 0;
 	#timeID = 0;
-	#watchState = { started: false, stopped: false, running: false };
-	// use a getter to create a read-only access to the private properties
-	get startTime() {
-		return this.#startTime;
-	}
-	get endTime() {
-		return this.#endTime;
-	}
-	get timeDuration() {
-		return this.#timeDuration;
-	}
-	get watchState() {
-		return this.#watchState;
-	}
+	watchState = {
+		started: false,
+		stopped: false,
+		running: false,
+		paused: false,
+	};
 
 	// stopWatch own properties
 	constructor() {}
@@ -40,38 +33,85 @@ class createStopWatch {
 	// watch control methods
 	startWatch = function () {
 		let feedbackObj;
-		if (!this.#watchState.running) {
-			this.#startTime = performance.now();
-			this.#watchState.started = this.#watchState.running = true;
+		if (!this.watchState.running) {
+			this.startTime = performance.now();
+			// log live time
+			this.#timeID = setInterval(() => {
+				this.endTime = performance.now();
+
+				this.watchFeedback(
+					"duration",
+					this.formatElapsedTime(this.calculateTimeDuration())
+				);
+			}, 1);
+			this.watchState.started = this.watchState.running = true;
 
 			// log state feedback
 			this.watchFeedback("state", "Stopwatch started");
-			this.watchFeedback("duration", "");
-			// log live time
-			this.#timeID = setInterval(
-				watchFeedback(
-					"duration",
-					`Time elapsed: ${this.calculateTimeDuration()}`
-				),
-				1000
-			);
 		} else {
 			this.watchFeedback("state", "Stopwatch already running");
 		}
 	};
 
 	stopWatchRunning = function () {
-		if (this.#watchState.running) {
-			this.#endTime = performance.now();
-			this.#watchState.stopped = this.#watchState.running = false;
+		this.endTime = performance.now();
+		switch (true) {
+			case this.watchState.running === true: {
+				// stop logging live time
+				clearInterval(this.#timeID);
 
-			// log state and time duration feedback
-			this.watchFeedback("state", "StopWatch ended");
+				this.watchFeedback(
+					"duration",
+					this.formatElapsedTime(this.calculateTimeDuration())
+				);
+				this.watchState.started = this.watchState.running = false;
+				this.watchState.stopped = true;
+
+				// log state feedback
+				this.watchFeedback("state", "Stopwatch ended");
+
+				break;
+			}
+
+			case this.watchState.paused === true: {
+				this.watchState.started = this.watchState.running = false;
+				this.watchState.stopped = true;
+				this.watchState.paused = false;
+
+				// log state feedback
+				this.watchFeedback("state", "Stopwatch ended");
+
+				break;
+			}
+
+			case this.watchState.stopped === true: {
+				this.watchFeedback("state", "Stopwatch already stopped");
+				break;
+			}
+
+			default: {
+				this.watchFeedback("state", "Stopwatch not started");
+				break;
+			}
+		}
+	};
+
+	pauseRunning = function () {
+		this.endTime = performance.now();
+		if (this.watchState.running) {
+			// stop logging live time
+			clearInterval(this.#timeID);
+
 			this.watchFeedback(
 				"duration",
-				`Time duration: ${calculateTimeDuration()}s`
+				this.formatElapsedTime(this.calculateTimeDuration())
 			);
-		} else if (this.#watchState.stopped) {
+			this.watchState.running = false;
+			this.watchState.paused = true;
+
+			// log state feedback
+			this.watchFeedback("state", "Stopwatch ended paused");
+		} else if (this.watchState.stopped) {
 			this.watchFeedback("state", "Stopwatch already stopped");
 		} else {
 			this.watchFeedback("state", "Stopwatch not running");
@@ -79,20 +119,26 @@ class createStopWatch {
 	};
 
 	calculateTimeDuration = function () {
-		this.#timeDuration = this.#endTime - this.#startTime;
-		return roundToDecimalPlaces(this.#timeDuration / 1000, 3);
+		this.timeDuration = this.endTime - this.startTime;
+		return this.timeDuration;
 	};
 
 	reset = function () {
-		this.#startTime = 0;
-		this.#endTime = 0;
-		this.#timeDuration = 0;
-		this.#watchState = { started: false, stopped: false, running: false };
+		// stop logging live time
+		if (this.watchState.running) {
+			clearInterval(this.#timeID);
+		}
+
+		this.startTime = 0;
+		this.endTime = 0;
+		this.timeDuration = 0;
+
+		this.watchState = { started: false, stopped: false, running: false };
 
 		// remove any state or duration feedbacks and log resetted
 		this.watchFeedback("state", "");
 		this.watchFeedback("duration", "");
-		this.watchFeedback("state", "resetted");
+		this.watchFeedback("state", "Stopwatch resetted");
 	};
 
 	watchFeedback = function (feedbackType, value) {
@@ -103,7 +149,18 @@ class createStopWatch {
 			}
 
 			case "duration": {
-				timeLogEl.textContent = value;
+				if (typeof value === "string") {
+					timeLogsContainerEl.textContent = value;
+				} else if (typeof value === "object") {
+					// add the formatted elapsed time to their respective log elements
+					for (let i = 0; i < timeLogEls.length; i++) {
+						const element = timeLogEls[i];
+						const timeValue = value[i];
+
+						element.textContent = timeValue;
+					}
+				}
+				break;
 			}
 
 			default:
@@ -111,7 +168,48 @@ class createStopWatch {
 		}
 	};
 
-	logLiveTime = function () {};
+	// this method will format the milliseconds according to hour, minute, second, miilliseconds
+	formatElapsedTime = function (timeinMS) {
+		// 1s = 1000ms
+		// 1m = 60s
+		// 1hr = 60m
+		// 1d = 24hr
+		// values in milliseconds
+		const oneDayInMS = 24 * 60 * 60 * 1000;
+		const oneHourInMS = 60 * 60 * 1000;
+		const oneMinuteInMS = 60 * 1000;
+		const oneSecondInMS = 1000;
+
+		/* Calculate elapsed time */
+		let elapsedDays = timeinMS / oneDayInMS;
+		elapsedDays = Math.floor(elapsedDays);
+
+		// Take the remainder in elaspedDays and divide by oneHourInMS to get elapsedHours
+		let elapsedHours = (timeinMS % oneDayInMS) / oneHourInMS;
+		elapsedHours = Math.floor(elapsedHours);
+
+		// Do the same for elapsedMinutes
+		let elapsedMinutes = (timeinMS % oneHourInMS) / oneMinuteInMS;
+		elapsedMinutes = Math.floor(elapsedMinutes);
+
+		// Do the same for elapsedSeconds
+		let elapsedSeconds = (timeinMS % oneMinuteInMS) / oneSecondInMS;
+		elapsedSeconds = Math.floor(elapsedSeconds);
+
+		// Do the same for elapsed milliseconds
+		let elapsedMilliseconds = timeinMS % oneSecondInMS;
+		elapsedMilliseconds = Math.floor(elapsedMilliseconds);
+
+		// Add all values to an array
+		const timeValues = [
+			elapsedDays,
+			elapsedHours,
+			elapsedMinutes,
+			elapsedSeconds,
+			elapsedMilliseconds,
+		];
+		return timeValues;
+	};
 }
 
 stopWatch = new createStopWatch();
@@ -144,7 +242,7 @@ function handleControlBtn(event) {
 
 // other secondary functions
 
-// this function rounds a number to given decimal places only when necessary
+// this function rounds a number to given decimal places
 function roundToDecimalPlaces(number, decimalPlaces) {
 	// create a function that'd create a factor of 10 as with the given decimal places
 	function createFactorOfTen(noOfZeros) {
@@ -160,4 +258,8 @@ function roundToDecimalPlaces(number, decimalPlaces) {
 		) / createFactorOfTen(decimalPlaces);
 	// Number.EPSILON used because of cases like 1.005 to 2 decimal places
 	return roundedNumber;
+}
+
+for (const key in stopWatch) {
+	console.log(key);
 }

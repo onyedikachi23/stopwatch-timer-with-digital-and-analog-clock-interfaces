@@ -43,6 +43,7 @@ class createStopWatch {
 					"duration",
 					this.formatElapsedTime(this.calculateTimeDuration())
 				);
+				console.log("started");
 			}, 1);
 			this.watchState.started = this.watchState.running = true;
 
@@ -118,11 +119,6 @@ class createStopWatch {
 		}
 	};
 
-	calculateTimeDuration = function () {
-		this.timeDuration = this.endTime - this.startTime;
-		return this.timeDuration;
-	};
-
 	reset = function () {
 		// stop logging live time
 		if (this.watchState.running) {
@@ -133,32 +129,43 @@ class createStopWatch {
 		this.endTime = 0;
 		this.timeDuration = 0;
 
-		this.watchState = { started: false, stopped: false, running: false };
+		// reset watch state back to default
+		for (const key in this.watchState) {
+			if (Object.hasOwn(this.watchState, key)) {
+				this.watchState[key] = false;
+			}
+		}
 
 		// remove any state or duration feedbacks and log resetted
 		this.watchFeedback("state", "");
-		this.watchFeedback("duration", "");
+		this.watchFeedback("duration", Array(5).fill(""));
 		this.watchFeedback("state", "Stopwatch resetted");
 	};
 
 	watchFeedback = function (feedbackType, value) {
 		switch (feedbackType) {
 			case "state": {
-				timePointsEl.textContent = value;
+				timePointsEl.innerText = value;
 				break;
 			}
 
 			case "duration": {
 				if (typeof value === "string") {
-					timeLogsContainerEl.textContent = value;
+					timeLogsContainerEl.innerText = value;
 				} else if (typeof value === "object") {
+					console.log("fed");
 					// add the formatted elapsed time to their respective log elements
 					for (let i = 0; i < timeLogEls.length; i++) {
+						console.log(`fed ${i}`);
 						const element = timeLogEls[i];
 						const timeValue = value[i];
 
-						element.textContent = timeValue;
+						element.innerText = timeValue;
+						console.log(element);
+						console.log(timeValue);
 					}
+				} else {
+					console.log("error");
 				}
 				break;
 			}
@@ -166,6 +173,11 @@ class createStopWatch {
 			default:
 				break;
 		}
+	};
+
+	calculateTimeDuration = function () {
+		this.timeDuration = this.endTime - this.startTime;
+		return this.timeDuration;
 	};
 
 	// this method will format the milliseconds according to hour, minute, second, miilliseconds
@@ -258,8 +270,4 @@ function roundToDecimalPlaces(number, decimalPlaces) {
 		) / createFactorOfTen(decimalPlaces);
 	// Number.EPSILON used because of cases like 1.005 to 2 decimal places
 	return roundedNumber;
-}
-
-for (const key in stopWatch) {
-	console.log(key);
 }

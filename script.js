@@ -153,19 +153,19 @@ class createStopWatch {
 				if (typeof value === "string") {
 					timeLogsContainerEl.innerText = value;
 				} else if (typeof value === "object") {
-					console.log("fed");
 					// add the formatted elapsed time to their respective log elements
 					for (let i = 0; i < timeLogEls.length; i++) {
-						console.log(`fed ${i}`);
-						const element = timeLogEls[i];
-						const timeValue = value[i];
+						// confirm what state the watch is in to know which button was clicked to know what feedback to show
+						switch (watchState[i]) {
+							case value:
+								break;
 
-						element.innerText = timeValue;
-						console.log(element);
-						console.log(timeValue);
+							default:
+								break;
+						}
 					}
 				} else {
-					console.log("error");
+					throw new Error("invalid feedback value");
 				}
 				break;
 			}

@@ -24,3 +24,11 @@ body {
 	background-color: rgb(24, 232, 24);
 	color: lightgray;
 }
+
+.hide {
+	display: none;
+}
+
+/* .show {
+    display: block;
+} */

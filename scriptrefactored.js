@@ -6,15 +6,16 @@ const controlBtnContainerEl = document.querySelector(".control-btns-container");
 const startBtn = controlBtnContainerEl.querySelector("#start-btn");
 const stopBtn = controlBtnContainerEl.querySelector("#stop-btn");
 const resetBtn = controlBtnContainerEl.querySelector("#reset-btn");
+const pauseBtn = controlBtnContainerEl.querySelector("#pause-btn");
+const resumeBtn = controlBtnContainerEl.querySelector("#resume-btn");
 let timeLogEls = document.getElementsByClassName("time-log");
-
-const timeLogElementsObj = {};
 
 // add click event listener to the control bitterness
 for (const child of controlBtnContainerEl.children) {
 	child.addEventListener("click", handleControlBtn);
 }
 
+const timeLogElementsObj = {};
 // organise timelog elements to the time value they display
 for (let i = 0; i < timeLogEls.length; i++) {
 	const element = timeLogEls[i];
@@ -75,6 +76,17 @@ function handleControlBtn(event) {
 			break;
 		}
 
+		case "pause-btn": {
+			// used the requestAnim... function to call the watch's pause function so that the timeStamp at clicking the pauseBtn is passed immediately
+			requestAnimationFrame(stopWatchController.pause);
+			break;
+		}
+
+		case "resume-btn": {
+			requestAnimationFrame(stopWatchController.resume);
+			break;
+		}
+
 		default:
 			break;
 	}
@@ -84,11 +96,15 @@ function handleControlBtn(event) {
 class StopWatch {
 	startTime = 0;
 	endTime = 0;
+	elapsedTimeDuration = 0;
+	startTimeAfterResume = 0;
+	endTimeAfterResume = 0;
 	watchState = {
 		started: false,
 		stopped: false,
 		running: false,
 		paused: false,
+		resumed: false,
 	};
 
 	constructor() {}
@@ -100,27 +116,36 @@ class StopWatch {
 			this.startTime = timeStamp;
 			// update all the state of the watch
 			this.watchState.started = this.watchState.running = true;
-			this.watchState.stopped = this.watchState.paused = false;
+			this.watchState.stopped =
+				this.watchState.paused =
+				this.watchState.resumed =
+					false;
 
 			return true;
 		}
 	}
 
-	stop(timeStamp) {
-		if (this.watchState.started) {
-			this.endTime = timeStamp;
+	stop() {
+		if (this.watchState.started && !this.watchState.paused) {
+			// this.endTime = timeStamp; getElapsedTime() will handle this
 			// update all the state of the watch
 			this.watchState.started = this.watchState.running = false;
 			this.watchState.stopped = true;
 			this.watchState.paused = false;
 
 			return true;
+		} else if (this.watchState.started && this.watchState.paused) {
+			// update all the state of the watch
+			this.watchState.stopped = true;
+			this.watchState.started = this.watchState.running = false;
+			this.watchState.paused = this.watchState.resumed = false;
+
+			return true;
 		}
 	}
 
 	reset() {
-		this.startTime = 0;
-		this.endTime = 0;
+		this.startTime = this.endTime = this.elapsedTimeDuration = 0;
 
 		// reset watch state back to default
 		for (const key in this.watchState) {
@@ -128,24 +153,75 @@ class StopWatch {
 				this.watchState[key] = false;
 			}
 		}
+
+		return true;
+	}
+
+	pause() {
+		// watch should be paused if it's running and not already paused.
+		if (this.watchState.running) {
+			// this.endTime = timeStamp; getElapsedTime() will handle this
+
+			// update the state of the watch
+			this.watchState.running = this.watchState.resumed = false;
+			this.watchState.paused = true;
+
+			return true;
+		}
+	}
+
+	resume(timeStamp) {
+		console.log(this.elapsedTimeDuration);
+
+		if (this.watchState.paused) {
+			this.startTimeAfterResume = timeStamp;
+
+			// update the state of the watch
+			this.watchState.running = this.watchState.resumed = true;
+			this.watchState.paused = false;
+
+			return true;
+		}
 	}
 
 	/* Time calculation methods */
-	getElapsedTime() {
-		let elapsedTime = this.endTime - this.startTime;
-		if (elapsedTime < 0) {
-			console.log(
-				"Elapsed time less than zero, function called too early"
-			);
-		}
+	getElapsedTime(timeStampOnCall) {
+		// if called after stopwatch was resumed, calculation would be entirely different
+		if (!this.watchState.resumed) {
+			this.endTime = timeStampOnCall;
+			this.elapsedTimeDuration = this.endTime - this.startTime;
+			if (this.elapsedTimeDuration < 0) {
+				console.log(
+					"Elapsed time less than zero, function called too early"
+				);
+			}
 
-		return elapsedTime;
+			return this.elapsedTimeDuration;
+		} else {
+			this.endTimeAfterResume = timeStampOnCall;
+		}
+	}
+
+	getElapsedTimeOnResume(timeStamp) {
+		if (this.watchState.resumed) {
+			// see the beginning comment on resume method for details on this calculation
+			this.endTime = timeStamp;
+			const previousElapsedTimeDuration = this.elapsedTimeDuration;
+			const newElapsedTimeDuration = this.endTime - this.startTime;
+			const totalElapsedTimeDuration =
+				previousElapsedTimeDuration + newElapsedTimeDuration;
+
+			// set new elapsedTimeDuration to continue from
+			this.elapsedTimeDuration = totalElapsedTimeDuration;
+
+			console.log(this.elapsedTimeDuration);
+			return this.elapsedTimeDuration;
+		}
 	}
 }
 
 // create the UI controller class for the stopWatch that updates the Domain
 class StopWatchUI {
-	elapsedTimeDuration = 0;
 	constructor() {}
 
 	/* methods to write to DOM */
@@ -162,6 +238,46 @@ class StopWatchUI {
 		timeLogEls.hoursLogEl.textContent = elapsedTimeObj.elapsedHours;
 		timeLogEls.daysLogEl.textContent = elapsedTimeObj.elapsedDays;
 	}
+
+	togglePauseBtnVisibility(visibility) {
+		switch (visibility) {
+			case "show": {
+				pauseBtn.classList.remove("hide");
+				break;
+			}
+			case "hide": {
+				pauseBtn.classList.add("hide");
+				break;
+			}
+
+			default: {
+				console.log(
+					"togglePauseBtnVisibility function called with invalid command"
+				);
+				break;
+			}
+		}
+	}
+
+	toggleResumeBtnVisibility(visibility) {
+		switch (visibility) {
+			case "show": {
+				resumeBtn.classList.remove("hide");
+				break;
+			}
+			case "hide": {
+				resumeBtn.classList.add("hide");
+				break;
+			}
+
+			default: {
+				console.log(
+					"toggleResumeBtnVisibility function called with invalid command"
+				);
+				break;
+			}
+		}
+	}
 }
 
 // create a stopWatchController class to incorporate all interfaces of the stopWatch together
@@ -176,6 +292,8 @@ class StopwatchController {
 		this.startAnimationLoop = this.startAnimationLoop.bind(this);
 		this.start = this.start.bind(this);
 		this.stop = this.stop.bind(this);
+		this.pause = this.pause.bind(this);
+		this.resume = this.resume.bind(this);
 	}
 
 	start(timeStamp) {
@@ -186,36 +304,101 @@ class StopwatchController {
 			this.animationFrameID = requestAnimationFrame(
 				this.startAnimationLoop
 			);
+
+			// enable pauseBtn
+			this.stopWatchUI.togglePauseBtnVisibility("show");
 		} else {
 			this.stopWatchUI.logStateFeedback("Stopwatch already started");
 		}
 	}
 
 	stop(timeStamp) {
-		if (this.stopWatch.stop(timeStamp)) {
+		if (this.stopWatch.stop()) {
 			// stop recording time and the loop
 			cancelAnimationFrame(this.animationFrameID);
-			this.animationFrameID = null;
+			this.resetAnimationFrameID();
 
 			// log feedback
 			this.stopWatchUI.logStateFeedback("Stopwatch stopped");
 			this.stopWatchUI.logElapsedTime(
-				this.formatElapsedTime(this.stopWatch.getElapsedTime())
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
 			);
+
+			// disable pauseBtn
+			this.stopWatchUI.togglePauseBtnVisibility("hide");
 		} else {
 			this.stopWatchUI.logStateFeedback("Stopwatch not started");
 		}
 	}
 
+	reset() {
+		// stopping logging live time
+		cancelAnimationFrame(this.animationFrameID);
+		this.resetAnimationFrameID();
+
+		// call the reset method of the stopwatch Obj and implement the reset
+		if (this.stopWatch.reset()) {
+			// clear all timeValues
+			this.stopWatchUI.logElapsedTime(
+				this.formatElapsedTime(this.stopWatch.getElapsedTime())
+			);
+			this.stopWatchUI.logStateFeedback("Stopwatch resetted");
+		} else {
+			this.stopWatchUI.logStateFeedback("Stopwatch resetted");
+		}
+	}
+
+	pause(timeStamp) {
+		// stop logging live time
+		cancelAnimationFrame(this.animationFrameID);
+		this.resetAnimationFrameID();
+
+		// call the pause method of the stopwatch and feedback to the stopWatchUI
+		if (this.stopWatch.pause()) {
+			// log elapsed time at call of pause
+			this.stopWatchUI.logElapsedTime(
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
+			);
+			this.stopWatchUI.logStateFeedback("Stopwatch paused");
+
+			// enable the resumeBtn
+			this.stopWatchUI.toggleResumeBtnVisibility("show");
+		}
+	}
+
+	resume(timeStamp) {
+		if (this.stopWatch.resume(timeStamp)) {
+			// start logging live time again
+			requestAnimationFrame(this.startAnimationLoop);
+		}
+	}
+
 	startAnimationLoop(timeStamp) {
-		this.stopWatch.endTime = timeStamp;
-		// log live time
-		this.stopWatchUI.logElapsedTime(
-			this.formatElapsedTime(this.stopWatch.getElapsedTime())
-		);
+		if (!this.stopWatch.watchState.resumed) {
+			// this.stopWatch.endTime = timeStamp; getElapsedTime() will handle this
+			// log live time
+			this.stopWatchUI.logElapsedTime(
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
+			);
+		} else if (this.animationFrameID) {
+			console.log("matched");
+			// the set animationFrameID will always be a falsy value after a paused state
+			// if the stopwatch was just resumed from a previous paused state, then the calculation of the elapsedTimeDuration would be different
+			// continue logging live time
+			this.stopWatchUI.logElapsedTime(
+				this.formatElapsedTime(
+					this.stopWatch.getElapsedTimeOnResume(timeStamp)
+				)
+			);
+		}
 
 		// repeat code block again and continue looping
 		this.animationFrameID = requestAnimationFrame(this.startAnimationLoop);
+	}
+
+	// this method resets animationFrameID back to a falsy value
+	resetAnimationFrameID() {
+		this.animationFrameID = null;
 	}
 
 	/* timeValuesFormatter */

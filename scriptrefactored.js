@@ -171,8 +171,6 @@ class StopWatch {
 	}
 
 	resume(timeStamp) {
-		console.log(this.elapsedTimeDuration);
-
 		if (this.watchState.paused) {
 			this.startTimeAfterResume = timeStamp;
 
@@ -188,10 +186,8 @@ class StopWatch {
 	getElapsedTime(timeStampOnCall) {
 		// if called after stopwatch was resumed, calculation would be entirely different
 		if (!this.watchState.resumed) {
-			console.log(timeStampOnCall);
 			this.endTime = timeStampOnCall;
 			this.elapsedTimeDuration = this.endTime - this.startTime;
-			console.log(this.elapsedTimeDuration);
 			if (this.elapsedTimeDuration < 0) {
 				console.log(
 					"Elapsed time less than zero, function called too early"
@@ -212,7 +208,6 @@ class StopWatch {
 
 			// calculate elapsed time since the watch saturated
 			this.elapsedTimeDuration = this.endTime - this.startTime;
-			console.log(this.startTime);
 
 			if (this.elapsedTimeDuration < 0) {
 				console.log(
@@ -325,9 +320,13 @@ class StopwatchController {
 
 			// log feedback
 			this.stopWatchUI.logStateFeedback("Stopwatch stopped");
-			this.stopWatchUI.logElapsedTime(
-				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
-			);
+			if (this.stopWatch.watchState.running) {
+				this.stopWatchUI.logElapsedTime(
+					this.formatElapsedTime(
+						this.stopWatch.getElapsedTime(timeStamp)
+					)
+				);
+			}
 
 			// disable pauseBtn and resumeBtn
 			this.stopWatchUI.togglePauseBtnVisibility("hide");
@@ -365,14 +364,12 @@ class StopwatchController {
 
 		// call the pause method of the stopwatch and feedback to the stopWatchUI
 		if (this.stopWatch.pause()) {
-			// log elapsed time at call of pause
-			this.stopWatchUI.logElapsedTime(
-				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
-			);
 			this.stopWatchUI.logStateFeedback("Stopwatch paused");
 
 			// enable the resumeBtn
 			this.stopWatchUI.toggleResumeBtnVisibility("show");
+		} else {
+			this.stopWatchUI.logStateFeedback("Stopwatch not running");
 		}
 	}
 
@@ -380,6 +377,10 @@ class StopwatchController {
 		if (this.stopWatch.resume(timeStamp)) {
 			// start logging live time again
 			requestAnimationFrame(this.startAnimationLoop);
+			this.stopWatchUI.logStateFeedback("Stopwatch resumed");
+
+			// disable the resumeBtn
+			this.stopWatchUI.toggleResumeBtnVisibility("hide");
 		}
 	}
 
@@ -391,7 +392,6 @@ class StopwatchController {
 				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
 			);
 		} else if (this.animationFrameID) {
-			console.log("matched");
 			// the set animationFrameID will always be a falsy value after a paused state
 			// if the stopwatch was just resumed from a previous paused state, then the calculation of the elapsedTimeDuration would be different
 			// continue logging live time

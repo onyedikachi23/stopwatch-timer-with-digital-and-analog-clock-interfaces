@@ -188,8 +188,10 @@ class StopWatch {
 	getElapsedTime(timeStampOnCall) {
 		// if called after stopwatch was resumed, calculation would be entirely different
 		if (!this.watchState.resumed) {
+			console.log(timeStampOnCall);
 			this.endTime = timeStampOnCall;
 			this.elapsedTimeDuration = this.endTime - this.startTime;
+			console.log(this.elapsedTimeDuration);
 			if (this.elapsedTimeDuration < 0) {
 				console.log(
 					"Elapsed time less than zero, function called too early"
@@ -199,22 +201,25 @@ class StopWatch {
 			return this.elapsedTimeDuration;
 		} else {
 			this.endTimeAfterResume = timeStampOnCall;
-		}
-	}
 
-	getElapsedTimeOnResume(timeStamp) {
-		if (this.watchState.resumed) {
-			// see the beginning comment on resume method for details on this calculation
-			this.endTime = timeStamp;
-			const previousElapsedTimeDuration = this.elapsedTimeDuration;
-			const newElapsedTimeDuration = this.endTime - this.startTime;
-			const totalElapsedTimeDuration =
-				previousElapsedTimeDuration + newElapsedTimeDuration;
+			// calculate elapsed time since resume and add to the main endTime
+			const elapsedTimeSinceResume =
+				this.endTimeAfterResume - this.startTimeAfterResume;
+			this.endTime += elapsedTimeSinceResume;
 
-			// set new elapsedTimeDuration to continue from
-			this.elapsedTimeDuration = totalElapsedTimeDuration;
+			// Reset startTimeAfterResume to the current time so that next pause and resume will calculate correctly
+			this.startTimeAfterResume = this.endTimeAfterResume;
 
-			console.log(this.elapsedTimeDuration);
+			// calculate elapsed time since the watch saturated
+			this.elapsedTimeDuration = this.endTime - this.startTime;
+			console.log(this.startTime);
+
+			if (this.elapsedTimeDuration < 0) {
+				console.log(
+					"Elapsed time less than zero, function called too early after resume"
+				);
+			}
+
 			return this.elapsedTimeDuration;
 		}
 	}
@@ -324,8 +329,9 @@ class StopwatchController {
 				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
 			);
 
-			// disable pauseBtn
+			// disable pauseBtn and resumeBtn
 			this.stopWatchUI.togglePauseBtnVisibility("hide");
+			this.stopWatchUI.toggleResumeBtnVisibility("hide");
 		} else {
 			this.stopWatchUI.logStateFeedback("Stopwatch not started");
 		}
@@ -340,11 +346,15 @@ class StopwatchController {
 		if (this.stopWatch.reset()) {
 			// clear all timeValues
 			this.stopWatchUI.logElapsedTime(
-				this.formatElapsedTime(this.stopWatch.getElapsedTime())
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(0))
 			);
 			this.stopWatchUI.logStateFeedback("Stopwatch resetted");
+
+			// disable pauseBtn and resumeBtn
+			this.stopWatchUI.togglePauseBtnVisibility("hide");
+			this.stopWatchUI.toggleResumeBtnVisibility("hide");
 		} else {
-			this.stopWatchUI.logStateFeedback("Stopwatch resetted");
+			this.stopWatchUI.logStateFeedback("Stopwatch couldn't reset");
 		}
 	}
 
@@ -386,9 +396,7 @@ class StopwatchController {
 			// if the stopwatch was just resumed from a previous paused state, then the calculation of the elapsedTimeDuration would be different
 			// continue logging live time
 			this.stopWatchUI.logElapsedTime(
-				this.formatElapsedTime(
-					this.stopWatch.getElapsedTimeOnResume(timeStamp)
-				)
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
 			);
 		}
 

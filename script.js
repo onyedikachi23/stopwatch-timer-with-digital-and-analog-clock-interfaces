@@ -1,133 +1,151 @@
 /** @format */
 
+// select immediate required HTML elements
 const timePointsEl = document.querySelector(".time-points");
 const controlBtnContainerEl = document.querySelector(".control-btns-container");
 const startBtn = controlBtnContainerEl.querySelector("#start-btn");
 const stopBtn = controlBtnContainerEl.querySelector("#stop-btn");
 const resetBtn = controlBtnContainerEl.querySelector("#reset-btn");
-const timeLogsContainerEl = document.querySelector(".time-log-container");
-const timeLogEls = timeLogsContainerEl.getElementsByClassName("time-log");
+const pauseBtn = controlBtnContainerEl.querySelector("#pause-btn");
+const resumeBtn = controlBtnContainerEl.querySelector("#resume-btn");
+let timeLogEls = document.getElementsByClassName("time-log");
 
 // add click event listener to the control bitterness
 for (const child of controlBtnContainerEl.children) {
 	child.addEventListener("click", handleControlBtn);
 }
 
-// createStopWatch template class
-class createStopWatch {
-	// set private properties
+const timeLogElementsObj = {};
+// organise timelog elements to the time value they display
+for (let i = 0; i < timeLogEls.length; i++) {
+	const element = timeLogEls[i];
+
+	// confirm the current element and add appropriate title
+	switch (element.id) {
+		case "elapsedMilliseconds": {
+			timeLogElementsObj.milliSecLogEl = element;
+			break;
+		}
+
+		case "elapsedSeconds": {
+			timeLogElementsObj.secondsLogEl = element;
+			break;
+		}
+
+		case "elapsedMinutes": {
+			timeLogElementsObj.minutesLogEl = element;
+			break;
+		}
+
+		case "elapsedHours": {
+			timeLogElementsObj.hoursLogEl = element;
+			break;
+		}
+
+		case "elapsedDays": {
+			timeLogElementsObj.daysLogEl = element;
+			break;
+		}
+
+		default:
+			console.log("No element matched for displaying time logs");
+			break;
+	}
+}
+timeLogEls = timeLogElementsObj;
+
+function handleControlBtn(event) {
+	const Btn = event.currentTarget;
+
+	// check which btn was clicked
+	switch (Btn.id) {
+		case "start-btn": {
+			// used the requestAnim... function to call the Watch's start function so that an initial timeStamp for startTime is passed immediately at clicking the startBtn and a repaint is done smoothly.
+			requestAnimationFrame(stopWatchController.start);
+			break;
+		}
+
+		case "stop-btn": {
+			// used the requestAnim... function to call the watch's stop function so that the timeStamp at clicking the stopBtn is passed immediately
+			requestAnimationFrame(stopWatchController.stop);
+			break;
+		}
+
+		case "reset-btn": {
+			stopWatchController.reset();
+			break;
+		}
+
+		case "pause-btn": {
+			// used the requestAnim... function to call the watch's pause function so that the timeStamp at clicking the pauseBtn is passed immediately
+			requestAnimationFrame(stopWatchController.pause);
+			break;
+		}
+
+		case "resume-btn": {
+			requestAnimationFrame(stopWatchController.resume);
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+// create a new stopwatch class for an object who's job is to only track time and intervals
+class StopWatch {
 	startTime = 0;
 	endTime = 0;
-	timeDuration = 0;
-	#timeID = 0;
+	elapsedTimeDuration = 0;
+	startTimeAfterResume = 0;
+	endTimeAfterResume = 0;
 	watchState = {
 		started: false,
 		stopped: false,
 		running: false,
 		paused: false,
+		resumed: false,
 	};
 
-	// stopWatch own properties
 	constructor() {}
 
-	// watch control methods
-	startWatch = function () {
-		let feedbackObj;
-		if (!this.watchState.running) {
-			this.startTime = performance.now();
-			// log live time
-			this.#timeID = setInterval(() => {
-				this.endTime = performance.now();
-
-				this.watchFeedback(
-					"duration",
-					this.formatElapsedTime(this.calculateTimeDuration())
-				);
-				console.log("started");
-			}, 1);
+	/* watch control methods */
+	start(timeStamp) {
+		/* confirm cases before implementation */
+		if (!this.watchState.started) {
+			this.startTime = timeStamp;
+			// update all the state of the watch
 			this.watchState.started = this.watchState.running = true;
+			this.watchState.stopped =
+				this.watchState.paused =
+				this.watchState.resumed =
+					false;
 
-			// log state feedback
-			this.watchFeedback("state", "Stopwatch started");
-		} else {
-			this.watchFeedback("state", "Stopwatch already running");
+			return true;
 		}
-	};
+	}
 
-	stopWatchRunning = function () {
-		this.endTime = performance.now();
-		switch (true) {
-			case this.watchState.running === true: {
-				// stop logging live time
-				clearInterval(this.#timeID);
+	stop() {
+		if (this.watchState.started && !this.watchState.paused) {
+			// this.endTime = timeStamp; getElapsedTime() will handle this
+			// update all the state of the watch
+			this.watchState.started = this.watchState.running = false;
+			this.watchState.stopped = true;
+			this.watchState.paused = false;
 
-				this.watchFeedback(
-					"duration",
-					this.formatElapsedTime(this.calculateTimeDuration())
-				);
-				this.watchState.started = this.watchState.running = false;
-				this.watchState.stopped = true;
+			return true;
+		} else if (this.watchState.started && this.watchState.paused) {
+			// update all the state of the watch
+			this.watchState.stopped = true;
+			this.watchState.started = this.watchState.running = false;
+			this.watchState.paused = this.watchState.resumed = false;
 
-				// log state feedback
-				this.watchFeedback("state", "Stopwatch ended");
-
-				break;
-			}
-
-			case this.watchState.paused === true: {
-				this.watchState.started = this.watchState.running = false;
-				this.watchState.stopped = true;
-				this.watchState.paused = false;
-
-				// log state feedback
-				this.watchFeedback("state", "Stopwatch ended");
-
-				break;
-			}
-
-			case this.watchState.stopped === true: {
-				this.watchFeedback("state", "Stopwatch already stopped");
-				break;
-			}
-
-			default: {
-				this.watchFeedback("state", "Stopwatch not started");
-				break;
-			}
+			return true;
 		}
-	};
+	}
 
-	pauseRunning = function () {
-		this.endTime = performance.now();
-		if (this.watchState.running) {
-			// stop logging live time
-			clearInterval(this.#timeID);
-
-			this.watchFeedback(
-				"duration",
-				this.formatElapsedTime(this.calculateTimeDuration())
-			);
-			this.watchState.running = false;
-			this.watchState.paused = true;
-
-			// log state feedback
-			this.watchFeedback("state", "Stopwatch ended paused");
-		} else if (this.watchState.stopped) {
-			this.watchFeedback("state", "Stopwatch already stopped");
-		} else {
-			this.watchFeedback("state", "Stopwatch not running");
-		}
-	};
-
-	reset = function () {
-		// stop logging live time
-		if (this.watchState.running) {
-			clearInterval(this.#timeID);
-		}
-
-		this.startTime = 0;
-		this.endTime = 0;
-		this.timeDuration = 0;
+	reset() {
+		this.startTime = this.endTime = this.elapsedTimeDuration = 0;
 
 		// reset watch state back to default
 		for (const key in this.watchState) {
@@ -136,50 +154,262 @@ class createStopWatch {
 			}
 		}
 
-		// remove any state or duration feedbacks and log resetted
-		this.watchFeedback("state", "");
-		this.watchFeedback("duration", Array(5).fill(""));
-		this.watchFeedback("state", "Stopwatch resetted");
-	};
+		return true;
+	}
 
-	watchFeedback = function (feedbackType, value) {
-		switch (feedbackType) {
-			case "state": {
-				timePointsEl.innerText = value;
-				break;
-			}
+	pause() {
+		// watch should be paused if it's running and not already paused.
+		if (this.watchState.running) {
+			// this.endTime = timeStamp; getElapsedTime() will handle this
 
-			case "duration": {
-				if (typeof value === "string") {
-					timeLogsContainerEl.innerText = value;
-				} else if (typeof value === "object") {
-					// add the formatted elapsed time to their respective log elements
-					for (let i = 0; i < timeLogEls.length; i++) {
-						// confirm what state the watch is in to know which button was clicked to know what feedback to show
-						switch (watchState[i]) {
-							case value:
-								break;
+			// update the state of the watch
+			this.watchState.running = this.watchState.resumed = false;
+			this.watchState.paused = true;
 
-							default:
-								break;
-						}
-					}
-				} else {
-					throw new Error("invalid feedback value");
-				}
-				break;
-			}
-
-			default:
-				break;
+			return true;
 		}
-	};
+	}
 
-	calculateTimeDuration = function () {
-		this.timeDuration = this.endTime - this.startTime;
-		return this.timeDuration;
-	};
+	resume(timeStamp) {
+		if (this.watchState.paused) {
+			this.startTimeAfterResume = timeStamp;
 
+			// update the state of the watch
+			this.watchState.running = this.watchState.resumed = true;
+			this.watchState.paused = false;
+
+			return true;
+		}
+	}
+
+	/* Time calculation methods */
+	getElapsedTime(timeStampOnCall) {
+		// if called after stopwatch was resumed, calculation would be entirely different
+		if (!this.watchState.resumed) {
+			this.endTime = timeStampOnCall;
+			this.elapsedTimeDuration = this.endTime - this.startTime;
+			if (this.elapsedTimeDuration < 0) {
+				console.log(
+					"Elapsed time less than zero, function called too early"
+				);
+			}
+
+			return this.elapsedTimeDuration;
+		} else {
+			this.endTimeAfterResume = timeStampOnCall;
+
+			// calculate elapsed time since resume and add to the main endTime
+			const elapsedTimeSinceResume =
+				this.endTimeAfterResume - this.startTimeAfterResume;
+			this.endTime += elapsedTimeSinceResume;
+
+			// Reset startTimeAfterResume to the current time so that next pause and resume will calculate correctly
+			this.startTimeAfterResume = this.endTimeAfterResume;
+
+			// calculate elapsed time since the watch saturated
+			this.elapsedTimeDuration = this.endTime - this.startTime;
+
+			if (this.elapsedTimeDuration < 0) {
+				console.log(
+					"Elapsed time less than zero, function called too early after resume"
+				);
+			}
+
+			return this.elapsedTimeDuration;
+		}
+	}
+}
+
+// create the UI controller class for the stopWatch that updates the Domain
+class StopWatchUI {
+	constructor() {}
+
+	/* methods to write to DOM */
+	logStateFeedback(message) {
+		timePointsEl.textContent = message;
+	}
+
+	logElapsedTime(elapsedTimeObj) {
+		// confirm which type of formatted timeValue the Element is to display.
+		timeLogEls.milliSecLogEl.textContent =
+			elapsedTimeObj.elapsedMilliseconds;
+		timeLogEls.secondsLogEl.textContent = elapsedTimeObj.elapsedSeconds;
+		timeLogEls.minutesLogEl.textContent = elapsedTimeObj.elapsedMinutes;
+		timeLogEls.hoursLogEl.textContent = elapsedTimeObj.elapsedHours;
+		timeLogEls.daysLogEl.textContent = elapsedTimeObj.elapsedDays;
+	}
+
+	togglePauseBtnVisibility(visibility) {
+		switch (visibility) {
+			case "show": {
+				pauseBtn.classList.remove("hide");
+				break;
+			}
+			case "hide": {
+				pauseBtn.classList.add("hide");
+				break;
+			}
+
+			default: {
+				console.log(
+					"togglePauseBtnVisibility function called with invalid command"
+				);
+				break;
+			}
+		}
+	}
+
+	toggleResumeBtnVisibility(visibility) {
+		switch (visibility) {
+			case "show": {
+				resumeBtn.classList.remove("hide");
+				break;
+			}
+			case "hide": {
+				resumeBtn.classList.add("hide");
+				break;
+			}
+
+			default: {
+				console.log(
+					"toggleResumeBtnVisibility function called with invalid command"
+				);
+				break;
+			}
+		}
+	}
+}
+
+// create a stopWatchController class to incorporate all interfaces of the stopWatch together
+class StopwatchController {
+	animationFrameID = 0;
+
+	constructor() {
+		this.stopWatch = new StopWatch();
+		this.stopWatchUI = new StopWatchUI();
+
+		// to avoid misconception of the this keyword when used in a callback
+		this.startAnimationLoop = this.startAnimationLoop.bind(this);
+		this.start = this.start.bind(this);
+		this.stop = this.stop.bind(this);
+		this.pause = this.pause.bind(this);
+		this.resume = this.resume.bind(this);
+	}
+
+	start(timeStamp) {
+		// start the watch immediately and returns true if the watch really started
+		if (this.stopWatch.start(timeStamp)) {
+			this.stopWatchUI.logStateFeedback("Stopwatch started");
+			// requestAnimationFrame will start a loop which synchronizes with the screen refresh rate. I'm using it in place of setInterval to avoid giving the CPU unnecessary load which might not be displayed by the browser
+			this.animationFrameID = requestAnimationFrame(
+				this.startAnimationLoop
+			);
+
+			// enable pauseBtn
+			this.stopWatchUI.togglePauseBtnVisibility("show");
+		} else {
+			this.stopWatchUI.logStateFeedback("Stopwatch already started");
+		}
+	}
+
+	stop(timeStamp) {
+		if (this.stopWatch.stop()) {
+			// stop recording time and the loop
+			cancelAnimationFrame(this.animationFrameID);
+			this.resetAnimationFrameID();
+
+			// log feedback
+			this.stopWatchUI.logStateFeedback("Stopwatch stopped");
+			if (this.stopWatch.watchState.running) {
+				this.stopWatchUI.logElapsedTime(
+					this.formatElapsedTime(
+						this.stopWatch.getElapsedTime(timeStamp)
+					)
+				);
+			}
+
+			// disable pauseBtn and resumeBtn
+			this.stopWatchUI.togglePauseBtnVisibility("hide");
+			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+		} else {
+			this.stopWatchUI.logStateFeedback("Stopwatch not started");
+		}
+	}
+
+	reset() {
+		// stopping logging live time
+		cancelAnimationFrame(this.animationFrameID);
+		this.resetAnimationFrameID();
+
+		// call the reset method of the stopwatch Obj and implement the reset
+		if (this.stopWatch.reset()) {
+			// clear all timeValues
+			this.stopWatchUI.logElapsedTime(
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(0))
+			);
+			this.stopWatchUI.logStateFeedback("Stopwatch resetted");
+
+			// disable pauseBtn and resumeBtn
+			this.stopWatchUI.togglePauseBtnVisibility("hide");
+			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+		} else {
+			this.stopWatchUI.logStateFeedback("Stopwatch couldn't reset");
+		}
+	}
+
+	pause(timeStamp) {
+		// stop logging live time
+		cancelAnimationFrame(this.animationFrameID);
+		this.resetAnimationFrameID();
+
+		// call the pause method of the stopwatch and feedback to the stopWatchUI
+		if (this.stopWatch.pause()) {
+			this.stopWatchUI.logStateFeedback("Stopwatch paused");
+
+			// enable the resumeBtn
+			this.stopWatchUI.toggleResumeBtnVisibility("show");
+		} else {
+			this.stopWatchUI.logStateFeedback("Stopwatch not running");
+		}
+	}
+
+	resume(timeStamp) {
+		if (this.stopWatch.resume(timeStamp)) {
+			// start logging live time again
+			requestAnimationFrame(this.startAnimationLoop);
+			this.stopWatchUI.logStateFeedback("Stopwatch resumed");
+
+			// disable the resumeBtn
+			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+		}
+	}
+
+	startAnimationLoop(timeStamp) {
+		if (!this.stopWatch.watchState.resumed) {
+			// this.stopWatch.endTime = timeStamp; getElapsedTime() will handle this
+			// log live time
+			this.stopWatchUI.logElapsedTime(
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
+			);
+		} else if (this.animationFrameID) {
+			// the set animationFrameID will always be a falsy value after a paused state
+			// if the stopwatch was just resumed from a previous paused state, then the calculation of the elapsedTimeDuration would be different
+			// continue logging live time
+			this.stopWatchUI.logElapsedTime(
+				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
+			);
+		}
+
+		// repeat code block again and continue looping
+		this.animationFrameID = requestAnimationFrame(this.startAnimationLoop);
+	}
+
+	// this method resets animationFrameID back to a falsy value
+	resetAnimationFrameID() {
+		this.animationFrameID = null;
+	}
+
+	/* timeValuesFormatter */
 	// this method will format the milliseconds according to hour, minute, second, miilliseconds
 	formatElapsedTime = function (timeinMS) {
 		// 1s = 1000ms
@@ -213,61 +443,15 @@ class createStopWatch {
 		elapsedMilliseconds = Math.floor(elapsedMilliseconds);
 
 		// Add all values to an array
-		const timeValues = [
+		const timeValues = {
 			elapsedDays,
 			elapsedHours,
 			elapsedMinutes,
 			elapsedSeconds,
 			elapsedMilliseconds,
-		];
+		};
 		return timeValues;
 	};
 }
 
-stopWatch = new createStopWatch();
-
-// handle btn control function
-function handleControlBtn(event) {
-	const Btn = event.currentTarget;
-
-	// check which btn was clicked
-	switch (Btn.id) {
-		case "start-btn": {
-			stopWatch.startWatch();
-			break;
-		}
-
-		case "stop-btn": {
-			stopWatch.stopWatchRunning();
-			break;
-		}
-
-		case "reset-btn": {
-			stopWatch.reset();
-			break;
-		}
-
-		default:
-			break;
-	}
-}
-
-// other secondary functions
-
-// this function rounds a number to given decimal places
-function roundToDecimalPlaces(number, decimalPlaces) {
-	// create a function that'd create a factor of 10 as with the given decimal places
-	function createFactorOfTen(noOfZeros) {
-		let factor = "1" + "0".repeat(noOfZeros);
-		// use BigInt to handle very large numbers, then convert to primitive number type
-		factor = parseInt(BigInt(factor));
-		return factor;
-	}
-
-	let roundedNumber =
-		Math.round(
-			(number + Number.EPSILON) * createFactorOfTen(decimalPlaces)
-		) / createFactorOfTen(decimalPlaces);
-	// Number.EPSILON used because of cases like 1.005 to 2 decimal places
-	return roundedNumber;
-}
+const stopWatchController = new StopwatchController();

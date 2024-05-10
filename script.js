@@ -129,8 +129,8 @@ class StopWatch {
 		if (this.watchState.started && !this.watchState.paused) {
 			// this.endTime = timeStamp; getElapsedTime() will handle this
 			// update all the state of the watch
-			this.watchState.started = this.watchState.running = false;
 			this.watchState.stopped = true;
+			this.watchState.started = this.watchState.running = false;
 			this.watchState.paused = false;
 
 			return true;
@@ -145,7 +145,12 @@ class StopWatch {
 	}
 
 	reset() {
-		this.startTime = this.endTime = this.elapsedTimeDuration = 0;
+		this.startTime =
+			this.endTime =
+			this.elapsedTimeDuration =
+			this.startTimeAfterResume =
+			this.endTimeAfterResume =
+				0;
 
 		// reset watch state back to default
 		for (const key in this.watchState) {
@@ -193,8 +198,6 @@ class StopWatch {
 					"Elapsed time less than zero, function called too early"
 				);
 			}
-
-			return this.elapsedTimeDuration;
 		} else {
 			this.endTimeAfterResume = timeStampOnCall;
 
@@ -214,9 +217,8 @@ class StopWatch {
 					"Elapsed time less than zero, function called too early after resume"
 				);
 			}
-
-			return this.elapsedTimeDuration;
 		}
+		return this.elapsedTimeDuration;
 	}
 }
 
@@ -280,6 +282,78 @@ class StopWatchUI {
 	}
 }
 
+// create a stopwatch state storage class to store updated state of the watch at every animation loop, so that the watch continues from where it stopped at the any page load
+
+class StopWatchStateStorage {
+	stateData = {
+		startTime: 0,
+		endTime: 0,
+		elapsedTimeDuration: 0,
+		startTimeAfterResume: 0,
+		endTimeAfterResume: 0,
+		watchState: {
+			started: false,
+			stopped: false,
+			running: false,
+			paused: false,
+			resumed: false,
+		},
+		stateFeedbackMessage: "",
+	};
+
+	constructor() {}
+
+	// method to update stopwatch storage
+	updateStateData(stopWatchObj, feedbackMessage) {
+		if (stopWatchObj !== undefined) {
+			this.stateData.startTime = stopWatchObj.startTime;
+			this.stateData.endTime = stopWatchObj.endTime;
+			this.stateData.elapsedTimeDuration =
+				stopWatchObj.elapsedTimeDuration;
+			this.stateData.startTimeAfterResume =
+				stopWatchObj.startTimeAfterResume;
+			this.stateData.endTimeAfterResume = stopWatchObj.endTimeAfterResume;
+			this.stateData.watchState = stopWatchObj.watchState;
+		}
+		if (feedbackMessage !== undefined) {
+			this.stateData.stateFeedbackMessage = feedbackMessage;
+		}
+
+		// then save state
+		this.save();
+	}
+
+	// method to convert state object to JSON string
+	toJSONString(object) {
+		return JSON.stringify(object);
+	}
+
+	// method to convert JSON string to JavaScript object
+	jsonToObject(jsonString) {
+		return JSON.parse(jsonString);
+	}
+
+	// method to save state object to storage
+	save() {
+		localStorage.setItem(
+			"stopWatchState",
+			this.toJSONString(this.stateData)
+		);
+	}
+
+	// this method loads the state data from local storage into the state object
+	load() {
+		const jsonString = localStorage.getItem("stopWatchState");
+		if (jsonString !== null) {
+			this.stateData = this.jsonToObject(jsonString);
+
+			return true;
+		} else {
+			return false;
+		}
+	}
+}
+
 // create a stopWatchController class to incorporate all interfaces of the stopWatch together
 class StopwatchController {
 	animationFrameID = 0;
@@ -287,6 +361,7 @@ class StopwatchController {
 	constructor() {
 		this.stopWatch = new StopWatch();
 		this.stopWatchUI = new StopWatchUI();
+		this.stopWatchStateStorage = new StopWatchStateStorage();
 
 		// to avoid misconception of the this keyword when used in a callback
 		this.startAnimationLoop = this.startAnimationLoop.bind(this);
@@ -294,12 +369,13 @@ class StopwatchController {
 		this.stop = this.stop.bind(this);
 		this.pause = this.pause.bind(this);
 		this.resume = this.resume.bind(this);
+		this.loadAndResumeFromLocalStorage =
+			this.loadAndResumeFromLocalStorage.bind(this);
 	}
 
 	start(timeStamp) {
 		// start the watch immediately and returns true if the watch really started
 		if (this.stopWatch.start(timeStamp)) {
-			this.stopWatchUI.logStateFeedback("Stopwatch started");
 			// requestAnimationFrame will start a loop which synchronizes with the screen refresh rate. I'm using it in place of setInterval to avoid giving the CPU unnecessary load which might not be displayed by the browser
 			this.animationFrameID = requestAnimationFrame(
 				this.startAnimationLoop
@@ -307,8 +383,21 @@ class StopwatchController {
 
 			// enable pauseBtn
 			this.stopWatchUI.togglePauseBtnVisibility("show");
+
+			// log feedback and save updated state to stopwatch state storage
+			const feedbackMessage = "Stopwatch started";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				this.stopWatch,
+				feedbackMessage
+			);
 		} else {
-			this.stopWatchUI.logStateFeedback("Stopwatch already started");
+			const feedbackMessage = "Stopwatch already started";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				undefined,
+				feedbackMessage
+			);
 		}
 	}
 
@@ -318,8 +407,7 @@ class StopwatchController {
 			cancelAnimationFrame(this.animationFrameID);
 			this.resetAnimationFrameID();
 
-			// log feedback
-			this.stopWatchUI.logStateFeedback("Stopwatch stopped");
+			// calculate duration and log it if stop was called at running
 			if (this.stopWatch.watchState.running) {
 				this.stopWatchUI.logElapsedTime(
 					this.formatElapsedTime(
@@ -331,8 +419,21 @@ class StopwatchController {
 			// disable pauseBtn and resumeBtn
 			this.stopWatchUI.togglePauseBtnVisibility("hide");
 			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+
+			// log feedback and save updated state to stopwatch state storage
+			const feedbackMessage = "Stopwatch stopped";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				this.stopWatch,
+				feedbackMessage
+			);
 		} else {
-			this.stopWatchUI.logStateFeedback("Stopwatch not started");
+			const feedbackMessage = "Stopwatch not started";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				undefined,
+				feedbackMessage
+			);
 		}
 	}
 
@@ -347,29 +448,52 @@ class StopwatchController {
 			this.stopWatchUI.logElapsedTime(
 				this.formatElapsedTime(this.stopWatch.getElapsedTime(0))
 			);
-			this.stopWatchUI.logStateFeedback("Stopwatch resetted");
 
 			// disable pauseBtn and resumeBtn
 			this.stopWatchUI.togglePauseBtnVisibility("hide");
 			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+
+			// log state feedback and update state data
+			const feedbackMessage = "Stopwatch resetted";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				this.stopWatch,
+				feedbackMessage
+			);
 		} else {
-			this.stopWatchUI.logStateFeedback("Stopwatch couldn't reset");
+			const feedbackMessage = "Something went wrong";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				this.stopWatch,
+				feedbackMessage
+			);
+			console.log("StopWatch wasn't reset");
 		}
 	}
 
-	pause(timeStamp) {
+	pause() {
 		// stop logging live time
 		cancelAnimationFrame(this.animationFrameID);
 		this.resetAnimationFrameID();
 
 		// call the pause method of the stopwatch and feedback to the stopWatchUI
 		if (this.stopWatch.pause()) {
-			this.stopWatchUI.logStateFeedback("Stopwatch paused");
-
 			// enable the resumeBtn
 			this.stopWatchUI.toggleResumeBtnVisibility("show");
+			// log state feedback and update stopwatchStateStorage
+			const feedbackMessage = "Stopwatch paused";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				this.stopWatch,
+				feedbackMessage
+			);
 		} else {
-			this.stopWatchUI.logStateFeedback("Stopwatch not running");
+			const feedbackMessage = "Stopwatch not running";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				this.stopWatch,
+				feedbackMessage
+			);
 		}
 	}
 
@@ -377,28 +501,27 @@ class StopwatchController {
 		if (this.stopWatch.resume(timeStamp)) {
 			// start logging live time again
 			requestAnimationFrame(this.startAnimationLoop);
-			this.stopWatchUI.logStateFeedback("Stopwatch resumed");
-
 			// disable the resumeBtn
 			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+
+			// log state feedback and save state to State storage
+			const feedbackMessage = "Stopwatch resumed";
+			this.stopWatchUI.logStateFeedback(feedbackMessage);
+			this.stopWatchStateStorage.updateStateData(
+				this.stopWatch,
+				feedbackMessage
+			);
 		}
 	}
 
 	startAnimationLoop(timeStamp) {
-		if (!this.stopWatch.watchState.resumed) {
-			// this.stopWatch.endTime = timeStamp; getElapsedTime() will handle this
-			// log live time
-			this.stopWatchUI.logElapsedTime(
-				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
-			);
-		} else if (this.animationFrameID) {
-			// the set animationFrameID will always be a falsy value after a paused state
-			// if the stopwatch was just resumed from a previous paused state, then the calculation of the elapsedTimeDuration would be different
-			// continue logging live time
-			this.stopWatchUI.logElapsedTime(
-				this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
-			);
-		}
+		// this.stopWatch.endTime = timeStamp; getElapsedTime() will handle this
+		// log live time
+		this.stopWatchUI.logElapsedTime(
+			this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
+		);
+		// update state data
+		this.stopWatchStateStorage.updateStateData(this.stopWatch, undefined);
 
 		// repeat code block again and continue looping
 		this.animationFrameID = requestAnimationFrame(this.startAnimationLoop);
@@ -407,6 +530,98 @@ class StopwatchController {
 	// this method resets animationFrameID back to a falsy value
 	resetAnimationFrameID() {
 		this.animationFrameID = null;
+	}
+
+	//this method loads the stopWatch previous state from the browser local storage and resumes it
+	loadAndResumeFromLocalStorage(timeStamp) {
+		// first load items from local storage to the stopWatch state storage object
+		// this.stopWatchStateStorage.load() also confirms if stopWatchState key is in the Local Storage of the browser
+		if (this.stopWatchStateStorage.load()) {
+			// then load the state data into the stopWatch object
+			const stopWatchObjProperties = Object.keys(this.stopWatch);
+			for (let i = 0; i < stopWatchObjProperties.length; i++) {
+				const property = stopWatchObjProperties[i];
+				// if property exists in stopWatch assign it to the value
+				if (Object.hasOwn(this.stopWatch, property)) {
+					this.stopWatch[property] =
+						this.stopWatchStateStorage.stateData[property];
+				}
+			}
+
+			// so to resume stopwatch from where it stopped
+			const isStarted =
+				this.stopWatchStateStorage.stateData.watchState.started;
+			const isRunning =
+				this.stopWatchStateStorage.stateData.watchState.running;
+			const isPaused =
+				this.stopWatchStateStorage.stateData.watchState.paused;
+			const isResumed =
+				this.stopWatchStateStorage.stateData.watchState.resumed;
+			const isStopped =
+				this.stopWatchStateStorage.stateData.watchState.stopped;
+			const elapsedTimeDuration =
+				this.stopWatchStateStorage.stateData.elapsedTimeDuration;
+			const startTime = this.stopWatchStateStorage.stateData.startTime;
+			const endTime = this.stopWatchStateStorage.stateData.endTime;
+			const feedbackMessage =
+				this.stopWatchStateStorage.stateData.stateFeedbackMessage;
+
+			if (isStarted) {
+				// this code block should execute if started = true
+				switch (true) {
+					case isRunning: {
+						// start logging live time from the elapsedTimeDuration
+						this.stopWatch.watchState.resumed = true;
+						this.stopWatch.startTimeAfterResume = timeStamp;
+						this.animationFrameID = requestAnimationFrame(
+							this.startAnimationLoop
+						);
+						// log feedbackMessage and enable pauseBtn
+						this.stopWatchUI.logStateFeedback(feedbackMessage);
+						this.stopWatchUI.togglePauseBtnVisibility("show");
+
+						break;
+					}
+
+					case isPaused: {
+						// make sure resumed is false so that getElapsedTime function doesn't cause problems
+						this.stopWatch.watchState.resumed = false;
+						// log previous time duration and feedback message
+						this.stopWatchUI.logElapsedTime(
+							this.formatElapsedTime(
+								this.stopWatch.getElapsedTime(endTime)
+							) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
+						);
+						this.stopWatchUI.logStateFeedback(feedbackMessage);
+						// enable resumeBtn and also show pauseBtn
+						this.stopWatchUI.toggleResumeBtnVisibility("show");
+						this.stopWatchUI.togglePauseBtnVisibility("show");
+
+						break;
+					}
+					case value: {
+						break;
+					}
+
+					default:
+						break;
+				}
+			} else if (isStopped) {
+				// make sure resumed is false so that getElapsedTime function doesn't cause problems
+				this.stopWatch.watchState.resumed = false;
+				// log previous time duration and feedback message
+				this.stopWatchUI.logElapsedTime(
+					this.formatElapsedTime(
+						this.stopWatch.getElapsedTime(endTime)
+					) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
+				);
+				this.stopWatchUI.logStateFeedback(feedbackMessage);
+				// enable resumeBtn and also show pauseBtn
+				this.stopWatchUI.toggleResumeBtnVisibility("hide");
+				this.stopWatchUI.togglePauseBtnVisibility("hide");
+				console.log("ran");
+			}
+		}
 	}
 
 	/* timeValuesFormatter */
@@ -455,3 +670,5 @@ class StopwatchController {
 }
 
 const stopWatchController = new StopwatchController();
+// load the stopwatch state from previous session if it exists in LocalStorage
+requestAnimationFrame(stopWatchController.loadAndResumeFromLocalStorage);

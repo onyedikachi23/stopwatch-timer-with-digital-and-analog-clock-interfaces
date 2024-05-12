@@ -10,21 +10,43 @@
 		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body>
-		<h1>Stopwatch project</h1>
-		<p class="time-points"></p>
-		<div class="time-log-container">
-			<span class="time-log" id="elapsedDays">0</span>:
-			<span class="time-log" id="elapsedHours">0</span>:
-			<span class="time-log" id="elapsedMinutes">0</span>:
-			<span class="time-log" id="elapsedSeconds">0</span>:
-			<span class="time-log" id="elapsedMilliseconds">0</span>
-		</div>
-		<div class="control-btns-container">
-			<button id="start-btn" class="btn">start</button>
-			<button id="stop-btn" class="btn">stop</button>
-			<button id="reset-btn" class="btn">reset</button>
-			<button id="pause-btn" class="btn hide">pause</button>
-			<button id="resume-btn" class="btn hide">resume</button>
+		<div class="body-inner-container">
+			<h1 class="project-title">Stopwatch project</h1>
+
+			<!-- stopwatch UI -->
+			<div class="stopwatch-UI">
+				<!-- digital stopwatch UI -->
+				<div class="digital-stopwatch-container">
+					<div class="time-log-container">
+						<span class="time-log" id="elapsedDays">00</span>
+						<span class="time-values-divider">:</span>
+						<span class="time-log" id="elapsedHours">00</span>
+						<span class="time-values-divider">:</span>
+						<span class="time-log" id="elapsedMinutes">00</span>
+						<span class="time-values-divider">:</span>
+						<span class="time-log" id="elapsedSeconds">00</span>
+						<span class="time-values-divider">:</span>
+						<span class="time-log" id="elapsedMilliseconds"
+							>000</span
+						>
+					</div>
+				</div>
+
+				<div class="control-btns-container grid-5-items">
+					<button id="start-btn" class="control-btn">start</button>
+					<button id="stop-btn" class="control-btn">stop</button>
+					<button id="reset-btn" class="control-btn">reset</button>
+					<button id="pause-btn" class="control-btn hide"
+						>pause</button
+					>
+					<button id="resume-btn" class="control-btn hide"
+						>resume</button
+					>
+				</div>
+
+				<!-- feedback message -->
+				<span class="feedback-message"></span>
+			</div>
 		</div>
 		<script src="script.js"></script>
 	</body>

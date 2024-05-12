@@ -1,7 +1,7 @@
 /** @format */
 
 // select immediate required HTML elements
-const timePointsEl = document.querySelector(".time-points");
+const feedbackMessageEl = document.querySelector(".feedback-message");
 const controlBtnContainerEl = document.querySelector(".control-btns-container");
 const startBtn = controlBtnContainerEl.querySelector("#start-btn");
 const stopBtn = controlBtnContainerEl.querySelector("#stop-btn");
@@ -228,27 +228,41 @@ class StopWatchUI {
 
 	/* methods to write to DOM */
 	logStateFeedback(message) {
-		timePointsEl.textContent = message;
+		feedbackMessageEl.textContent = message;
 	}
 
 	logElapsedTime(elapsedTimeObj) {
 		// confirm which type of formatted timeValue the Element is to display.
-		timeLogEls.milliSecLogEl.textContent =
-			elapsedTimeObj.elapsedMilliseconds;
-		timeLogEls.secondsLogEl.textContent = elapsedTimeObj.elapsedSeconds;
-		timeLogEls.minutesLogEl.textContent = elapsedTimeObj.elapsedMinutes;
-		timeLogEls.hoursLogEl.textContent = elapsedTimeObj.elapsedHours;
-		timeLogEls.daysLogEl.textContent = elapsedTimeObj.elapsedDays;
+		timeLogEls.milliSecLogEl.textContent = this.toThreeDigitsStr(
+			elapsedTimeObj.elapsedMilliseconds
+		);
+		timeLogEls.secondsLogEl.textContent = this.toTwoDigitsStr(
+			elapsedTimeObj.elapsedSeconds
+		);
+		timeLogEls.minutesLogEl.textContent = this.toTwoDigitsStr(
+			elapsedTimeObj.elapsedMinutes
+		);
+		timeLogEls.hoursLogEl.textContent = this.toTwoDigitsStr(
+			elapsedTimeObj.elapsedHours
+		);
+		timeLogEls.daysLogEl.textContent = this.toTwoDigitsStr(
+			elapsedTimeObj.elapsedDays
+		);
 	}
 
 	togglePauseBtnVisibility(visibility) {
 		switch (visibility) {
 			case "show": {
+				// first create layout for it then show
+				controlBtnContainerEl.className =
+					"control-btns-container grid-4-items";
 				pauseBtn.classList.remove("hide");
 				break;
 			}
 			case "hide": {
+				// first remove it, then return layout to default
 				pauseBtn.classList.add("hide");
+				controlBtnContainerEl.className = "control-btns-container";
 				break;
 			}
 
@@ -264,11 +278,17 @@ class StopWatchUI {
 	toggleResumeBtnVisibility(visibility) {
 		switch (visibility) {
 			case "show": {
+				// first create layout for it then show
+				controlBtnContainerEl.className =
+					"control-btns-container grid-5-items";
 				resumeBtn.classList.remove("hide");
 				break;
 			}
 			case "hide": {
+				// first remove it, then return layout to previous state
 				resumeBtn.classList.add("hide");
+				controlBtnContainerEl.className =
+					"control-btns-container grid-4-items";
 				break;
 			}
 
@@ -279,6 +299,40 @@ class StopWatchUI {
 				break;
 			}
 		}
+	}
+
+	// this method formats time values to 3 digits when necessary
+	toThreeDigitsStr(number) {
+		let numberStr = number.toString();
+
+		switch (numberStr.length) {
+			case 1: {
+				numberStr = `00${numberStr}`;
+				break;
+			}
+
+			case 2: {
+				numberStr = `0${numberStr}`;
+				break;
+			}
+
+			default: {
+				break;
+			}
+		}
+
+		return numberStr;
+	}
+
+	// this method formats time values to 2 digits when necessary
+	toTwoDigitsStr(number) {
+		let numberStr = number.toString();
+
+		if (numberStr.length === 1) {
+			numberStr = `0${numberStr}`;
+		}
+
+		return numberStr;
 	}
 }
 
@@ -416,9 +470,9 @@ class StopwatchController {
 				);
 			}
 
-			// disable pauseBtn and resumeBtn
-			this.stopWatchUI.togglePauseBtnVisibility("hide");
+			// disable resumeBtn then pauseBtn
 			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+			this.stopWatchUI.togglePauseBtnVisibility("hide");
 
 			// log feedback and save updated state to stopwatch state storage
 			const feedbackMessage = "Stopwatch stopped";
@@ -449,9 +503,9 @@ class StopwatchController {
 				this.formatElapsedTime(this.stopWatch.getElapsedTime(0))
 			);
 
-			// disable pauseBtn and resumeBtn
-			this.stopWatchUI.togglePauseBtnVisibility("hide");
+			// disable resumeBtn then pauseBtn
 			this.stopWatchUI.toggleResumeBtnVisibility("hide");
+			this.stopWatchUI.togglePauseBtnVisibility("hide");
 
 			// log state feedback and update state data
 			const feedbackMessage = "Stopwatch resetted";
@@ -593,9 +647,9 @@ class StopwatchController {
 							) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
 						);
 						this.stopWatchUI.logStateFeedback(feedbackMessage);
-						// enable resumeBtn and also show pauseBtn
-						this.stopWatchUI.toggleResumeBtnVisibility("show");
+						// enable pauseBtn first then resumeBtn
 						this.stopWatchUI.togglePauseBtnVisibility("show");
+						this.stopWatchUI.toggleResumeBtnVisibility("show");
 
 						break;
 					}
@@ -616,10 +670,9 @@ class StopwatchController {
 					) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
 				);
 				this.stopWatchUI.logStateFeedback(feedbackMessage);
-				// enable resumeBtn and also show pauseBtn
+				// disable resumeBtn then pauseBtn
 				this.stopWatchUI.toggleResumeBtnVisibility("hide");
 				this.stopWatchUI.togglePauseBtnVisibility("hide");
-				console.log("ran");
 			}
 		}
 	}

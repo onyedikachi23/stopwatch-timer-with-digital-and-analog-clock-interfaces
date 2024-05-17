@@ -2,7 +2,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Russo+One&display=swap");
 
 :root {
-	--very-dark-blue: #00008b;
+	--very-dark-blue: #00006a;
+	--very-darker-blue: #010139;
 }
 
 html,
@@ -12,7 +13,7 @@ body {
 }
 
 body {
-	background-color: blue;
+	background-color: var(--very-darker-blue);
 	color: white;
 	margin: 0;
 }
@@ -43,6 +44,253 @@ body {
 	font-family: "fast-track";
 	letter-spacing: 0.15rem;
 }
+
+/* analog .stopwatch-UI */
+.circular-clock {
+	background-color: white;
+	color: var(--very-darker-blue);
+	width: 16rem;
+	height: 16rem;
+	border-radius: 50%;
+	position: relative;
+	font-family: monospace;
+	font-weight: bold;
+	box-shadow: 0 0 64px hsla(0, 0%, 100%, 0.7);
+}
+
+.clock-hour {
+	position: absolute;
+	transform: translate(0, -50%);
+}
+
+.shift-up-right .clock-hour {
+	transform: translate(50%, -50%);
+}
+
+.hour-and-tick-container::before {
+	content: "";
+	position: absolute;
+	width: calc(1rem / 24);
+	height: calc(4.2rem / 16);
+	background-color: var(--very-darker-blue);
+}
+
+/* to position and rotate the ticks:
+360/12 = 30deg for each hour
+top/bottom = R(1 - cos(x)) = 8rem * (1 - cos(x*30)); x = clock hour
+left/right = R(1 - sin(x)) = 8rem * (1 - sin(x*30));
+
+for the hour numbers, they have to be moved into the circle a bit, so just reduce the value of R
+top/bottom = R - rcos(x) = 8rem - rcos(x*30); x = clock hour 
+left/right = R - rsin(x) = 8rem - rsin(x*30); x = clock hour
+*/
+
+.sixTwelve .clock-hour {
+	transform: translate(50%, -50%);
+	/* shifts 6 and 12 to align with their ticks */
+}
+
+/* for 1 */
+#one-container::before {
+	top: calc(8rem * (1 - cos(1 * 30deg)));
+	right: calc(8rem * (1 - sin(1 * 30deg)));
+	transform: rotate(30deg);
+	transform-origin: top right;
+}
+
+#one {
+	top: calc(8rem - (6.6rem * cos(1 * 30deg)));
+	right: calc(8rem - (6.6rem * sin(1 * 30deg)));
+}
+
+/* for 2 */
+#two-container::before {
+	top: calc(8rem * (1 - cos(60deg)));
+	right: calc(8rem * (1 - sin(60deg)));
+	transform: rotate(60deg);
+	transform-origin: top right;
+}
+
+#two {
+	top: calc(8rem - (6.6rem * cos(60deg)));
+	right: calc(8rem - (6.6rem * sin(60deg)));
+}
+
+/* for 3 */
+#three-container::before {
+	top: calc(8rem * (1 - cos(90deg)));
+	right: calc(8rem * (1 - sin(90deg)));
+	transform: rotate(90deg);
+	transform-origin: top right;
+}
+
+#three {
+	top: calc(8rem - (6.6rem * cos(90deg)));
+	right: calc(8rem - (6.6rem * sin(90deg)));
+}
+
+/* for 4 */
+#four-container::before {
+	top: calc(8rem * (1 - cos(120deg)));
+	right: calc(8rem * (1 - sin(120deg)));
+	transform: rotate(120deg);
+	transform-origin: top right;
+}
+
+#four {
+	top: calc(8rem - (6.6rem * cos(120deg)));
+	right: calc(8rem - (6.6rem * sin(120deg)));
+}
+
+/* for 5 */
+#five-container::before {
+	top: calc(8rem * (1 - cos(150deg)));
+	right: calc(8rem * (1 - sin(150deg)));
+	transform: rotate(150deg);
+	transform-origin: top right;
+}
+
+#five {
+	top: calc(8rem - (6.6rem * cos(150deg)));
+	right: calc(8rem - (6.6rem * sin(150deg)));
+}
+
+/* for 6 */
+#six-container::before {
+	top: calc(8rem * (1 - cos(180deg)));
+	right: calc(8rem * (1 - sin(180deg)));
+	transform: rotate(180deg);
+	transform-origin: top right;
+}
+
+#six {
+	top: calc(8rem - (6.6rem * cos(180deg)));
+	right: calc(8rem - (6.6rem * sin(180deg)));
+}
+
+/* for 7 */
+#seven-container::before {
+	top: calc(8rem * (1 - cos(210deg)));
+	right: calc(8rem * (1 - sin(210deg)));
+	transform: rotate(210deg);
+	transform-origin: top right;
+}
+
+#seven {
+	top: calc(8rem - (6.6rem * cos(210deg)));
+	right: calc(8rem - (6.6rem * sin(210deg)));
+}
+
+/* for 8 */
+#eight-container::before {
+	top: calc(8rem * (1 - cos(240deg)));
+	right: calc(8rem * (1 - sin(240deg)));
+	transform: rotate(240deg);
+	transform-origin: top right;
+}
+
+#eight {
+	top: calc(8rem - (6.6rem * cos(240deg)));
+	right: calc(8rem - (6.6rem * sin(240deg)));
+}
+
+/* for 9 */
+#nine-container::before {
+	top: calc(8rem * (1 - cos(270deg)));
+	right: calc(8rem * (1 - sin(270deg)));
+	transform: rotate(270deg);
+	transform-origin: top right;
+}
+
+#nine {
+	top: calc(8rem - (6.6rem * cos(270deg)));
+	right: calc(8rem - (6.6rem * sin(270deg)));
+}
+
+/* for 10 */
+#ten-container::before {
+	top: calc(8rem * (1 - cos(300deg)));
+	right: calc(8rem * (1 - sin(300deg)));
+	transform: rotate(300deg);
+	transform-origin: top right;
+}
+
+#ten {
+	top: calc(8rem - (6.6rem * cos(300deg)));
+	right: calc(8rem - (6.6rem * sin(300deg)));
+}
+
+/* for 11 */
+#eleven-container::before {
+	top: calc(8rem * (1 - cos(330deg)));
+	right: calc(8rem * (1 - sin(330deg)));
+	transform: rotate(330deg);
+	transform-origin: top right;
+}
+
+#eleven {
+	top: calc(8rem - (6.6rem * cos(330deg)));
+	right: calc(8rem - (6.6rem * sin(330deg)));
+}
+
+/* for 12 */
+#twelve-container::before {
+	top: calc(8rem * (1 - cos(360deg)));
+	right: calc(8rem * (1 - sin(360deg)));
+	transform: rotate(360deg);
+	transform-origin: top right;
+}
+
+#twelve {
+	top: calc(8rem - (6.6rem * cos(360deg)));
+	right: calc(8rem - (6.6rem * sin(360deg)));
+}
+
+/* for the clock handles */
+.clock-handle {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+}
+
+#second-hand {
+	width: 0.125rem;
+	height: 9rem;
+	background-color: red;
+	transform: translate(-50%, -80%) rotate(210deg);
+	transform-origin: center 80%;
+}
+
+#second-hand::after {
+	content: "";
+	display: block;
+	position: absolute;
+	width: calc(8rem / 16);
+	height: calc(8rem / 16);
+	border-radius: 100%;
+	background-color: red;
+	bottom: 15%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+#minute-hand {
+	width: 0.25rem;
+	height: 5rem;
+	background: rgba(0, 0, 0, 0.25);
+	transform: translate(-50%, -100%) rotate(30deg);
+	transform-origin: center bottom;
+}
+
+#hour-hand {
+	width: calc(6rem / 16);
+	height: 4rem;
+	background: rgba(0, 0, 0, 0.5);
+	transform: translate(-50%, -100%) rotate(330deg);
+	transform-origin: center bottom;
+}
+
+/* end analog .stopwatch-UI */
 
 /* stopwatch UI */
 .stopwatch-UI {
@@ -101,7 +349,7 @@ body {
 	grid-template-columns: repeat(3, 1fr);
 	grid-template-rows: repeat(2, 1fr);
 	gap: 1rem;
-	height: 4.47rem;
+	height: 4.46.6rem;
 }
 
 .control-btns-container.grid-4-items {

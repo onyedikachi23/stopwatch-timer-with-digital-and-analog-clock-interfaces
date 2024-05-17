@@ -6,12 +6,6 @@
 	--very-darker-blue: #010139;
 }
 
-html,
-body {
-	width: 100%;
-	height: 100%;
-}
-
 body {
 	background-color: var(--very-darker-blue);
 	color: white;

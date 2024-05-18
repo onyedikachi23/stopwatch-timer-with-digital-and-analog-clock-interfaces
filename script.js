@@ -8,6 +8,10 @@ const stopBtn = controlBtnContainerEl.querySelector("#stop-btn");
 const resetBtn = controlBtnContainerEl.querySelector("#reset-btn");
 const pauseBtn = controlBtnContainerEl.querySelector("#pause-btn");
 const resumeBtn = controlBtnContainerEl.querySelector("#resume-btn");
+const analogClockEl = document.querySelector(".circular-clock");
+const clockHourHandEl = analogClockEl.querySelector("#hour-hand");
+const clockMinuteHandEl = analogClockEl.querySelector("#minute-hand");
+const clockSecondHandEl = analogClockEl.querySelector("#second-hand");
 let timeLogEls = document.getElementsByClassName("time-log");
 
 // add click event listener to the control bitterness
@@ -336,6 +340,61 @@ class StopWatchUI {
 	}
 }
 
+/* analog stopwatch UI */
+class AnalogStopwatchUI {
+	secondAngle = 0;
+	minuteAngle = 0;
+	hourAngle = 0;
+	constructor() {}
+
+	updateHandlesAngles(formattedTimeValues, elapsedTimeDurationInMS) {
+		this.secondAngle = formattedTimeValues.elapsedSeconds * 6;
+		this.minuteAngle = formattedTimeValues.elapsedMinutes * 6;
+		this.hourAngle =
+			this.getElapsedHoursWithOneDecimalPlace(elapsedTimeDurationInMS) *
+			30;
+
+		// apply transformations to the clock handles using the calculated values
+		clockSecondHandEl.style.transform = `translate(-50%, -80%) rotate(${this.secondAngle}deg)`;
+		clockMinuteHandEl.style.transform = `translate(-50%, -100%) rotate(${this.minuteAngle}deg)`;
+		clockHourHandEl.style.transform = `translate(-50%, -100%) rotate(${this.hourAngle}deg)`;
+	}
+
+	// reset rotation of clock handles to 0 deg
+	resetClockHandles() {
+		this.secondAngle = 0;
+		this.minuteAngle = 0;
+		this.hourAngle = 0;
+
+		// apply transformations to the clock handles using the calculated values
+		clockSecondHandEl.style.transform = `translate(-50%, -80%) rotate(${this.secondAngle}deg)`;
+		clockMinuteHandEl.style.transform = `translate(-50%, -100%) rotate(${this.minuteAngle}deg)`;
+		clockHourHandEl.style.transform = `translate(-50%, -100%) rotate(${this.hourAngle}deg)`;
+	}
+
+	// this method gets the elapsed hours in one decimal place without rounding or approximating
+	getElapsedHoursWithOneDecimalPlace(timeinMS) {
+		const oneDayInMS = 24 * 60 * 60 * 1000;
+		const oneHourInMS = 60 * 60 * 1000;
+
+		// Take the remainder in elaspedDays and divide by oneHourInMS to get elapsedHours
+		let elapsedHours = `${(timeinMS % oneDayInMS) / oneHourInMS}`;
+
+		// set to one decimal place
+		const twoOrMoreDecimalPlacesRegex = /\.\d{2,}/;
+		if (twoOrMoreDecimalPlacesRegex.test(elapsedHours)) {
+			let matchedStr = elapsedHours.match(twoOrMoreDecimalPlacesRegex)[0];
+			matchedStr = matchedStr.slice(1, 2);
+			elapsedHours = elapsedHours.replace(
+				twoOrMoreDecimalPlacesRegex,
+				matchedStr
+			);
+		}
+
+		return elapsedHours;
+	}
+}
+
 // create a stopwatch state storage class to store updated state of the watch at every animation loop, so that the watch continues from where it stopped at the any page load
 
 class StopWatchStateStorage {
@@ -415,6 +474,7 @@ class StopwatchController {
 	constructor() {
 		this.stopWatch = new StopWatch();
 		this.stopWatchUI = new StopWatchUI();
+		this.stopWatchAnalogUI = new AnalogStopwatchUI();
 		this.stopWatchStateStorage = new StopWatchStateStorage();
 
 		// to avoid misconception of the this keyword when used in a callback
@@ -503,6 +563,9 @@ class StopwatchController {
 				this.formatElapsedTime(this.stopWatch.getElapsedTime(0))
 			);
 
+			// return clock handles to 0 deg rotation
+			this.stopWatchAnalogUI.resetClockHandles();
+
 			// disable resumeBtn then pauseBtn
 			this.stopWatchUI.toggleResumeBtnVisibility("hide");
 			this.stopWatchUI.togglePauseBtnVisibility("hide");
@@ -570,10 +633,20 @@ class StopwatchController {
 
 	startAnimationLoop(timeStamp) {
 		// this.stopWatch.endTime = timeStamp; getElapsedTime() will handle this
-		// log live time
-		this.stopWatchUI.logElapsedTime(
-			this.formatElapsedTime(this.stopWatch.getElapsedTime(timeStamp))
+		const elapsedTimeDurationInMS =
+			this.stopWatch.getElapsedTime(timeStamp);
+		const formattedTimeValues = this.formatElapsedTime(
+			elapsedTimeDurationInMS
 		);
+		// log live time
+		this.stopWatchUI.logElapsedTime(formattedTimeValues);
+
+		// update analog clock handles
+		this.stopWatchAnalogUI.updateHandlesAngles(
+			formattedTimeValues,
+			elapsedTimeDurationInMS
+		);
+
 		// update state data
 		this.stopWatchStateStorage.updateStateData(this.stopWatch, undefined);
 

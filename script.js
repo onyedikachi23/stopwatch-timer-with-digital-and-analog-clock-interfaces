@@ -12,7 +12,11 @@ const analogClockEl = document.querySelector(".circular-clock");
 const clockHourHandEl = analogClockEl.querySelector("#hour-hand");
 const clockMinuteHandEl = analogClockEl.querySelector("#minute-hand");
 const clockSecondHandEl = analogClockEl.querySelector("#second-hand");
+const backgroundMusicEl = document.querySelector("#background-music");
 let timeLogEls = document.getElementsByClassName("time-log");
+
+// reduce the audio volume for the background music
+backgroundMusicEl.volume = 0.5;
 
 // add click event listener to the control bitterness
 for (const child of controlBtnContainerEl.children) {
@@ -505,6 +509,9 @@ class StopwatchController {
 				this.stopWatch,
 				feedbackMessage
 			);
+
+			// play background music
+			backgroundMusicEl.play();
 		} else {
 			const feedbackMessage = "Stopwatch already started";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
@@ -541,6 +548,9 @@ class StopwatchController {
 				this.stopWatch,
 				feedbackMessage
 			);
+
+			// pause background music
+			backgroundMusicEl.pause();
 		} else {
 			const feedbackMessage = "Stopwatch not started";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
@@ -577,6 +587,9 @@ class StopwatchController {
 				this.stopWatch,
 				feedbackMessage
 			);
+
+			// pause background music
+			backgroundMusicEl.pause();
 		} else {
 			const feedbackMessage = "Something went wrong";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
@@ -604,6 +617,9 @@ class StopwatchController {
 				this.stopWatch,
 				feedbackMessage
 			);
+
+			// pause background music
+			backgroundMusicEl.pause();
 		} else {
 			const feedbackMessage = "Stopwatch not running";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
@@ -628,6 +644,9 @@ class StopwatchController {
 				this.stopWatch,
 				feedbackMessage
 			);
+
+			// play background music
+			backgroundMusicEl.play();
 		}
 	}
 
@@ -707,6 +726,9 @@ class StopwatchController {
 						this.stopWatchUI.logStateFeedback(feedbackMessage);
 						this.stopWatchUI.togglePauseBtnVisibility("show");
 
+						// play background music
+						backgroundMusicEl.play();
+
 						break;
 					}
 
@@ -723,6 +745,9 @@ class StopwatchController {
 						// enable pauseBtn first then resumeBtn
 						this.stopWatchUI.togglePauseBtnVisibility("show");
 						this.stopWatchUI.toggleResumeBtnVisibility("show");
+
+						// pause background music
+						backgroundMusicEl.pause();
 
 						break;
 					}
@@ -746,6 +771,9 @@ class StopwatchController {
 				// disable resumeBtn then pauseBtn
 				this.stopWatchUI.toggleResumeBtnVisibility("hide");
 				this.stopWatchUI.togglePauseBtnVisibility("hide");
+
+				// pause background music
+				backgroundMusicEl.pause();
 			}
 		}
 	}

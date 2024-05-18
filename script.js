@@ -384,7 +384,7 @@ class AnalogStopwatchUI {
 		const twoOrMoreDecimalPlacesRegex = /\.\d{2,}/;
 		if (twoOrMoreDecimalPlacesRegex.test(elapsedHours)) {
 			let matchedStr = elapsedHours.match(twoOrMoreDecimalPlacesRegex)[0];
-			matchedStr = matchedStr.slice(1, 2);
+			matchedStr = matchedStr.slice(0, 2);
 			elapsedHours = elapsedHours.replace(
 				twoOrMoreDecimalPlacesRegex,
 				matchedStr

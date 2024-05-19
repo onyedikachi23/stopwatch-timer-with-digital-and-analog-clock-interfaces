@@ -416,24 +416,33 @@ class StopWatchStateStorage {
 			resumed: false,
 		},
 		stateFeedbackMessage: "",
+		secondAngle: 0,
+		minuteAngle: 0,
+		hourAngle: 0,
 	};
 
 	constructor() {}
 
 	// method to update stopwatch storage
-	updateStateData(stopWatchObj, feedbackMessage) {
-		if (stopWatchObj !== undefined) {
-			this.stateData.startTime = stopWatchObj.startTime;
-			this.stateData.endTime = stopWatchObj.endTime;
+	updateStateData(stateObj) {
+		if (Boolean(stateObj.stopWatchObj)) {
+			this.stateData.startTime = stateObj.stopWatchObj.startTime;
+			this.stateData.endTime = stateObj.stopWatchObj.endTime;
 			this.stateData.elapsedTimeDuration =
-				stopWatchObj.elapsedTimeDuration;
+				stateObj.stopWatchObj.elapsedTimeDuration;
 			this.stateData.startTimeAfterResume =
-				stopWatchObj.startTimeAfterResume;
-			this.stateData.endTimeAfterResume = stopWatchObj.endTimeAfterResume;
-			this.stateData.watchState = stopWatchObj.watchState;
+				stateObj.stopWatchObj.startTimeAfterResume;
+			this.stateData.endTimeAfterResume =
+				stateObj.stopWatchObj.endTimeAfterResume;
+			this.stateData.watchState = stateObj.stopWatchObj.watchState;
 		}
-		if (feedbackMessage !== undefined) {
-			this.stateData.stateFeedbackMessage = feedbackMessage;
+		if (Boolean(stateObj.stopWatchAnalogUI)) {
+			this.stateData.secondAngle = stateObj.stopWatchAnalogUI.secondAngle;
+			this.stateData.minuteAngle = stateObj.stopWatchAnalogUI.minuteAngle;
+			this.stateData.hourAngle = stateObj.stopWatchAnalogUI.hourAngle;
+		}
+		if (Boolean(stateObj.feedbackMessage)) {
+			this.stateData.stateFeedbackMessage = stateObj.feedbackMessage;
 		}
 
 		// then save state
@@ -505,20 +514,25 @@ class StopwatchController {
 			// log feedback and save updated state to stopwatch state storage
 			const feedbackMessage = "Stopwatch started";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				this.stopWatch,
-				feedbackMessage
-			);
 
-			// play background music
+			const stateObj = {
+				stopWatchObj: this.stopWatch,
+				stopWatchAnalogUI: this.stopWatchAnalogUI,
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
+
+			// play background music from start
+			backgroundMusicEl.currentTime = 0;
 			backgroundMusicEl.play();
 		} else {
 			const feedbackMessage = "Stopwatch already started";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				undefined,
-				feedbackMessage
-			);
+
+			const stateObj = {
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
 		}
 	}
 
@@ -544,20 +558,24 @@ class StopwatchController {
 			// log feedback and save updated state to stopwatch state storage
 			const feedbackMessage = "Stopwatch stopped";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				this.stopWatch,
-				feedbackMessage
-			);
+
+			const stateObj = {
+				stopWatchObj: this.stopWatch,
+				stopWatchAnalogUI: this.stopWatchAnalogUI,
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
 
 			// pause background music
 			backgroundMusicEl.pause();
 		} else {
 			const feedbackMessage = "Stopwatch not started";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				undefined,
-				feedbackMessage
-			);
+
+			const stateObj = {
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
 		}
 	}
 
@@ -583,20 +601,24 @@ class StopwatchController {
 			// log state feedback and update state data
 			const feedbackMessage = "Stopwatch resetted";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				this.stopWatch,
-				feedbackMessage
-			);
+
+			const stateObj = {
+				stopWatchObj: this.stopWatch,
+				stopWatchAnalogUI: this.stopWatchAnalogUI,
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
 
 			// pause background music
 			backgroundMusicEl.pause();
 		} else {
 			const feedbackMessage = "Something went wrong";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				this.stopWatch,
-				feedbackMessage
-			);
+
+			const stateObj = {
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
 			console.log("StopWatch wasn't reset");
 		}
 	}
@@ -613,20 +635,26 @@ class StopwatchController {
 			// log state feedback and update stopwatchStateStorage
 			const feedbackMessage = "Stopwatch paused";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				this.stopWatch,
-				feedbackMessage
-			);
+
+			const stateObj = {
+				stopWatchObj: this.stopWatch,
+				stopWatchAnalogUI: this.stopWatchAnalogUI,
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
 
 			// pause background music
 			backgroundMusicEl.pause();
 		} else {
 			const feedbackMessage = "Stopwatch not running";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				this.stopWatch,
-				feedbackMessage
-			);
+
+			const stateObj = {
+				stopWatchObj: this.stopWatch,
+				stopWatchAnalogUI: this.stopWatchAnalogUI,
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
 		}
 	}
 
@@ -640,12 +668,15 @@ class StopwatchController {
 			// log state feedback and save state to State storage
 			const feedbackMessage = "Stopwatch resumed";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
-			this.stopWatchStateStorage.updateStateData(
-				this.stopWatch,
-				feedbackMessage
-			);
 
-			// play background music
+			const stateObj = {
+				stopWatchObj: this.stopWatch,
+				stopWatchAnalogUI: this.stopWatchAnalogUI,
+				feedbackMessage: feedbackMessage,
+			};
+			this.stopWatchStateStorage.updateStateData(stateObj);
+
+			// resume background music
 			backgroundMusicEl.play();
 		}
 	}
@@ -667,7 +698,11 @@ class StopwatchController {
 		);
 
 		// update state data
-		this.stopWatchStateStorage.updateStateData(this.stopWatch, undefined);
+		const stateObj = {
+			stopWatchObj: this.stopWatch,
+			stopWatchAnalogUI: this.stopWatchAnalogUI,
+		};
+		this.stopWatchStateStorage.updateStateData(stateObj);
 
 		// repeat code block again and continue looping
 		this.animationFrameID = requestAnimationFrame(this.startAnimationLoop);
@@ -687,9 +722,21 @@ class StopwatchController {
 			const stopWatchObjProperties = Object.keys(this.stopWatch);
 			for (let i = 0; i < stopWatchObjProperties.length; i++) {
 				const property = stopWatchObjProperties[i];
-				// if property exists in stopWatch assign it to the value
+				// if property exists in stopWatch, assign it to the value
 				if (Object.hasOwn(this.stopWatch, property)) {
 					this.stopWatch[property] =
+						this.stopWatchStateStorage.stateData[property];
+				}
+			}
+			// also load needed state data into stopWatchAnalogUI object
+			const stopWatchAnalogUIProperties = Object.keys(
+				this.stopWatchAnalogUI
+			);
+			for (let i = 0; i < stopWatchAnalogUIProperties.length; i++) {
+				const property = stopWatchAnalogUIProperties[i];
+				// if property exists in stopWatchAnalogUI, assign it to the value
+				if (Object.hasOwn(this.stopWatchAnalogUI, property)) {
+					this.stopWatchAnalogUI[property] =
 						this.stopWatchStateStorage.stateData[property];
 				}
 			}
@@ -735,12 +782,22 @@ class StopwatchController {
 					case isPaused: {
 						// make sure resumed is false so that getElapsedTime function doesn't cause problems
 						this.stopWatch.watchState.resumed = false;
-						// log previous time duration and feedback message
-						this.stopWatchUI.logElapsedTime(
-							this.formatElapsedTime(
-								this.stopWatch.getElapsedTime(endTime)
-							) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
+
+						const elapsedTimeDurationInMS =
+							this.stopWatch.getElapsedTime(endTime); //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
+						const formattedTimeValues = this.formatElapsedTime(
+							elapsedTimeDurationInMS
 						);
+						// log previous time duration
+						this.stopWatchUI.logElapsedTime(formattedTimeValues);
+
+						// update analog clock handles
+						this.stopWatchAnalogUI.updateHandlesAngles(
+							formattedTimeValues,
+							elapsedTimeDurationInMS
+						);
+
+						// feedback message
 						this.stopWatchUI.logStateFeedback(feedbackMessage);
 						// enable pauseBtn first then resumeBtn
 						this.stopWatchUI.togglePauseBtnVisibility("show");
@@ -751,9 +808,6 @@ class StopwatchController {
 
 						break;
 					}
-					case value: {
-						break;
-					}
 
 					default:
 						break;
@@ -761,12 +815,22 @@ class StopwatchController {
 			} else if (isStopped) {
 				// make sure resumed is false so that getElapsedTime function doesn't cause problems
 				this.stopWatch.watchState.resumed = false;
-				// log previous time duration and feedback message
-				this.stopWatchUI.logElapsedTime(
-					this.formatElapsedTime(
-						this.stopWatch.getElapsedTime(endTime)
-					) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
+
+				const elapsedTimeDurationInMS =
+					this.stopWatch.getElapsedTime(endTime); //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
+				const formattedTimeValues = this.formatElapsedTime(
+					elapsedTimeDurationInMS
 				);
+				// log previous time duration
+				this.stopWatchUI.logElapsedTime(formattedTimeValues);
+
+				// update analog clock handles
+				this.stopWatchAnalogUI.updateHandlesAngles(
+					formattedTimeValues,
+					elapsedTimeDurationInMS
+				);
+
+				// feedback message
 				this.stopWatchUI.logStateFeedback(feedbackMessage);
 				// disable resumeBtn then pauseBtn
 				this.stopWatchUI.toggleResumeBtnVisibility("hide");

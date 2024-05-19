@@ -419,6 +419,7 @@ class StopWatchStateStorage {
 		secondAngle: 0,
 		minuteAngle: 0,
 		hourAngle: 0,
+		backgroundMusicProgress: 0,
 	};
 
 	constructor() {}
@@ -443,6 +444,10 @@ class StopWatchStateStorage {
 		}
 		if (Boolean(stateObj.feedbackMessage)) {
 			this.stateData.stateFeedbackMessage = stateObj.feedbackMessage;
+		}
+		if (Boolean(stateObj.backgroundMusicProgress)) {
+			this.stateData.backgroundMusicProgress =
+				stateObj.backgroundMusicProgress;
 		}
 
 		// then save state
@@ -519,6 +524,7 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
+				backgroundMusicProgress: 0,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -563,6 +569,7 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
+				backgroundMusicProgress: backgroundMusicEl.currentTime,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -606,11 +613,13 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
+				backgroundMusicProgress: 0,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
-			// pause background music
+			// pause and reset background music
 			backgroundMusicEl.pause();
+			backgroundMusicEl.currentTime = 0;
 		} else {
 			const feedbackMessage = "Something went wrong";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
@@ -640,6 +649,7 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
+				backgroundMusicProgress: backgroundMusicEl.currentTime,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -701,6 +711,7 @@ class StopwatchController {
 		const stateObj = {
 			stopWatchObj: this.stopWatch,
 			stopWatchAnalogUI: this.stopWatchAnalogUI,
+			backgroundMusicProgress: backgroundMusicEl.currentTime,
 		};
 		this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -740,6 +751,9 @@ class StopwatchController {
 						this.stopWatchStateStorage.stateData[property];
 				}
 			}
+			// then set background music playback progress from state data
+			backgroundMusicEl.currentTime =
+                        this.stopWatchStateStorage.stateData.backgroundMusicProgress;
 
 			// so to resume stopwatch from where it stopped
 			const isStarted =

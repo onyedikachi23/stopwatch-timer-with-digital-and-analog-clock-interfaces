@@ -16,7 +16,7 @@ const backgroundMusicEl = document.querySelector("#background-music");
 let timeLogEls = document.getElementsByClassName("time-log");
 
 // reduce the audio volume for the background music
-backgroundMusicEl.volume = 0.5;
+backgroundMusicEl.volume = 0.3;
 
 // add click event listener to the control bitterness
 for (const child of controlBtnContainerEl.children) {
@@ -419,7 +419,7 @@ class StopWatchStateStorage {
 		secondAngle: 0,
 		minuteAngle: 0,
 		hourAngle: 0,
-		backgroundMusicProgress: 0,
+		// backgroundMusicProgress: 0,
 	};
 
 	constructor() {}
@@ -445,10 +445,10 @@ class StopWatchStateStorage {
 		if (Boolean(stateObj.feedbackMessage)) {
 			this.stateData.stateFeedbackMessage = stateObj.feedbackMessage;
 		}
-		if (Boolean(stateObj.backgroundMusicProgress)) {
-			this.stateData.backgroundMusicProgress =
-				stateObj.backgroundMusicProgress;
-		}
+		// if (Boolean(stateObj.backgroundMusicProgress)) {
+		// 	this.stateData.backgroundMusicProgress =
+		// 		stateObj.backgroundMusicProgress;
+		// }
 
 		// then save state
 		this.save();
@@ -524,7 +524,6 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
-				backgroundMusicProgress: 0,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -569,7 +568,6 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
-				backgroundMusicProgress: backgroundMusicEl.currentTime,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -613,7 +611,6 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
-				backgroundMusicProgress: 0,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -649,12 +646,15 @@ class StopwatchController {
 				stopWatchObj: this.stopWatch,
 				stopWatchAnalogUI: this.stopWatchAnalogUI,
 				feedbackMessage: feedbackMessage,
-				backgroundMusicProgress: backgroundMusicEl.currentTime,
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
-			// pause background music
+			// pause background music and set progress to elapsedSeconds
 			backgroundMusicEl.pause();
+			this.setPlayBackProgressToElapsedSeconds(
+				backgroundMusicEl,
+				this.stopWatch.elapsedTimeDuration
+			);
 		} else {
 			const feedbackMessage = "Stopwatch not running";
 			this.stopWatchUI.logStateFeedback(feedbackMessage);
@@ -686,17 +686,19 @@ class StopwatchController {
 			};
 			this.stopWatchStateStorage.updateStateData(stateObj);
 
-			// resume background music
+			// set progress to elapsedSeconds and resume background music
+			this.setPlayBackProgressToElapsedSeconds(
+				backgroundMusicEl,
+				this.stopWatch.elapsedTimeDuration
+			);
 			backgroundMusicEl.play();
 		}
 	}
 
 	startAnimationLoop(timeStamp) {
 		// this.stopWatch.endTime = timeStamp; getElapsedTime() will handle this
-		const elapsedTimeDurationInMS =
-			this.stopWatch.getElapsedTime(timeStamp);
 		const formattedTimeValues = this.formatElapsedTime(
-			elapsedTimeDurationInMS
+			this.stopWatch.getElapsedTime(timeStamp)
 		);
 		// log live time
 		this.stopWatchUI.logElapsedTime(formattedTimeValues);
@@ -704,14 +706,13 @@ class StopwatchController {
 		// update analog clock handles
 		this.stopWatchAnalogUI.updateHandlesAngles(
 			formattedTimeValues,
-			elapsedTimeDurationInMS
+			this.stopWatch.elapsedTimeDuration
 		);
 
 		// update state data
 		const stateObj = {
 			stopWatchObj: this.stopWatch,
 			stopWatchAnalogUI: this.stopWatchAnalogUI,
-			backgroundMusicProgress: backgroundMusicEl.currentTime,
 		};
 		this.stopWatchStateStorage.updateStateData(stateObj);
 
@@ -751,9 +752,11 @@ class StopwatchController {
 						this.stopWatchStateStorage.stateData[property];
 				}
 			}
-			// then set background music playback progress from state data
-			backgroundMusicEl.currentTime =
-                        this.stopWatchStateStorage.stateData.backgroundMusicProgress;
+			// then set background music playback progress to elapsedSeconds from stopWatchObj
+			this.setPlayBackProgressToElapsedSeconds(
+				backgroundMusicEl,
+				this.stopWatch.elapsedTimeDuration
+			);
 
 			// so to resume stopwatch from where it stopped
 			const isStarted =
@@ -797,10 +800,8 @@ class StopwatchController {
 						// make sure resumed is false so that getElapsedTime function doesn't cause problems
 						this.stopWatch.watchState.resumed = false;
 
-						const elapsedTimeDurationInMS =
-							this.stopWatch.getElapsedTime(endTime); //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
 						const formattedTimeValues = this.formatElapsedTime(
-							elapsedTimeDurationInMS
+							this.stopWatch.getElapsedTime(endTime) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
 						);
 						// log previous time duration
 						this.stopWatchUI.logElapsedTime(formattedTimeValues);
@@ -808,7 +809,7 @@ class StopwatchController {
 						// update analog clock handles
 						this.stopWatchAnalogUI.updateHandlesAngles(
 							formattedTimeValues,
-							elapsedTimeDurationInMS
+							this.stopWatch.elapsedTimeDuration
 						);
 
 						// feedback message
@@ -830,10 +831,8 @@ class StopwatchController {
 				// make sure resumed is false so that getElapsedTime function doesn't cause problems
 				this.stopWatch.watchState.resumed = false;
 
-				const elapsedTimeDurationInMS =
-					this.stopWatch.getElapsedTime(endTime); //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
 				const formattedTimeValues = this.formatElapsedTime(
-					elapsedTimeDurationInMS
+					this.stopWatch.getElapsedTime(endTime) //used endTime as timestamp parameter for getElapsedTime because it always needs a timestamp value to set to stopwatch.endTime
 				);
 				// log previous time duration
 				this.stopWatchUI.logElapsedTime(formattedTimeValues);
@@ -899,6 +898,15 @@ class StopwatchController {
 		};
 		return timeValues;
 	};
+
+	setPlayBackProgressToElapsedSeconds(mediaElement, timeinMS) {
+		// values in milliseconds
+		const oneMinuteInMS = 60 * 1000;
+		const oneSecondInMS = 1000;
+		let elapsedSeconds = (timeinMS % oneMinuteInMS) / oneSecondInMS;
+
+		mediaElement.currentTime = elapsedSeconds;
+	}
 }
 
 const stopWatchController = new StopwatchController();

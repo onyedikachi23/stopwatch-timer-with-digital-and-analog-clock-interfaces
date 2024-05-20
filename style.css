@@ -438,3 +438,19 @@ left/right = R - rsin(x) = 8rem - rsin(x*30); x = clock hour
 	color: red;
 	border-bottom: 1px solid limegreen;
 }
+
+@media screen and (max-width: 400px) {
+	.author-credits {
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.author-credits :first-child {
+		margin-bottom: 0;
+	}
+
+	.author-credits :nth-child(2) {
+		margin-top: 0rem;
+	}
+}

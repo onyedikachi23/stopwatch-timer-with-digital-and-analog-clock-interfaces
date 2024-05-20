@@ -840,7 +840,7 @@ class StopwatchController {
 				// update analog clock handles
 				this.stopWatchAnalogUI.updateHandlesAngles(
 					formattedTimeValues,
-					elapsedTimeDurationInMS
+					this.stopWatch.elapsedTimeDuration
 				);
 
 				// feedback message

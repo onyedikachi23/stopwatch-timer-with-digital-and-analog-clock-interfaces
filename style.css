@@ -420,6 +420,21 @@ left/right = R - rsin(x) = 8rem - rsin(x*30); x = clock hour
 	display: none;
 }
 
-/* .show {
-    display: block;
-} */
+/* footer - author credits */
+.author-credits {
+	margin-top: 2rem;
+	display: flex;
+	justify-content: center;
+	gap: 2rem;
+}
+
+.author-credits a {
+	color: limegreen;
+	text-decoration: none;
+	transition: all 0.25s ease-in-out;
+}
+
+.author-credits a:hover {
+	color: red;
+	border-bottom: 1px solid limegreen;
+}

@@ -36,7 +36,9 @@ This is a Stopwatch timer project built with two interfaces - digital and analog
     -   `transform: translate();`
     -   `transform: rotate();`
     -   `transform-origin: top right;`
--   OOP in JavaScript - **SOLID principles** - **classes** and **objects**
+-   OOP in JavaScript
+    -   **SOLID principles**
+    -   **classes** and **objects**
 -   Performance reliant animations - `requestAnimationFrame(callback);`
 
 ### What I learned

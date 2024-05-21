@@ -32,7 +32,10 @@ This is a Stopwatch timer project built with two interfaces - digital and analog
 ### Built with
 
 -   Semantic HTML5 markup
--   CSS Transformations - `css transform: translate();` - `css transform: rotate();` - `css transform-origin: top right;`
+-   CSS Transformations
+    -   `transform: translate();`
+    -   `transform: rotate();`
+    -   `transform-origin: top right;`
 -   OOP in JavaScript - **SOLID principles** - **classes** and **objects**
 -   Performance reliant animations - `js requestAnimationFrame(callback);`
 

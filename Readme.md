@@ -3,13 +3,15 @@
 # NerdyNerd - Stopwatch timer with both digital and analog clock interfaces
 
 - [NerdyNerd - Stopwatch timer with both digital and analog clock interfaces](#nerdynerd---stopwatch-timer-with-both-digital-and-analog-clock-interfaces)
-  - [Overview](#overview)
-    - [Project description](#project-description)
-    - [Screenshot](#screenshot)
-    - [Links](#links)
-  - [My process](#my-process)
-    - [Built with](#built-with)
-    - [What I learned](#what-i-learned)
+	- [Overview](#overview)
+		- [Project description](#project-description)
+		- [Screenshot](#screenshot)
+		- [Links](#links)
+	- [My process](#my-process)
+		- [Built with](#built-with)
+		- [What I learned](#what-i-learned)
+	- [Author](#author)
+	- [Acknowledgement](#acknowledgement)
 
 ## Overview
 
@@ -39,4 +41,16 @@ This is a Stopwatch timer project built with two interfaces - digital and analog
 -   Prototyping and inheritance of classes in JavaScript
 -   Using **SOLID principles**
 -   Using `requestAnimationFrame()` window method to create animation loops
--   Using CSS transformations to create a circular clock interface - Math for the positioning of ticks and hour numbers in the circular clock - ![circular clock math diagram](https://i.ibb.co/JsZRqH9/unnamed.jpg)
+-   Using CSS transformations to create a circular clock interface - Math for the positioning of ticks and hour numbers in the circular clock
+    -   ![circular clock math diagram](https://i.ibb.co/JsZRqH9/unnamed.jpg)
+
+## Author
+
+-   LinkedIn - [@onyedikachi23](https://www.linkedin.com/in/onyedikachi23)
+-   Frontend Mentor - [@OnyedikachiOzoani](https://www.frontendmentor.io/profile/OnyedikachiOzoani)
+
+## Acknowledgement
+
+All thanks to [MDN Web Docs](https://developer.mozilla.org/en-US/) and [Stack Overflow](https://stackoverflow.com/) for being helpful throughout the development of this project.
+
+**_Thanks for viewing my project!_**
